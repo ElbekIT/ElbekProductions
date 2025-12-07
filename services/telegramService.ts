@@ -31,6 +31,7 @@ export const sendOrderToTelegram = async (order: OrderFormState): Promise<boolea
 <b>💎 YANGI BEPUL BUYURTMA</b>
 ➖➖➖➖➖➖➖➖
 👤 <b>Mijoz:</b> <a href="https://t.me/${order.telegramUsername.replace('@', '')}">${order.firstName} ${order.lastName}</a>
+📧 <b>Email:</b> ${order.email || 'Kiritilmagan'}
 📱 <b>Tel:</b> ${order.phone}
 🌐 <b>Username:</b> @${order.telegramUsername.replace('@', '')}
 ➖➖➖➖➖➖➖➖

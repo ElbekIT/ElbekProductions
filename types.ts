@@ -2,9 +2,17 @@ export type DesignType = 'preview' | 'banner' | 'avatar' | 'logo';
 export type GameType = 'pubg' | 'minecraft' | 'csgo' | 'vlog' | 'gta' | 'valorant' | 'freefire' | 'roblox' | 'fifa' | 'cod' | 'dota' | 'standoff' | 'other';
 export type Language = 'uz' | 'ru' | 'en';
 
+export interface User {
+  uid: string;
+  displayName: string | null;
+  email: string | null;
+  photoURL: string | null;
+}
+
 export interface OrderFormState {
   firstName: string;
   lastName: string;
+  email?: string;
   phone: string;
   telegramUsername: string;
   comment: string;

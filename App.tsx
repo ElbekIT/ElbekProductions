@@ -1,10 +1,12 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import Hero from './components/Hero';
 import ShopSelection from './components/ShopSelection';
 import OrderForm from './components/OrderForm';
-import { DesignType, GameType, Language } from './types';
-import { CheckCircleIcon } from './components/Icons';
+import { DesignType, GameType, Language, User } from './types';
+import { CheckCircleIcon, LoaderIcon } from './components/Icons';
 import { translations } from './utils/translations';
+import { auth, loginWithGoogle, logout } from './services/firebase';
+import { onAuthStateChanged } from 'firebase/auth';
 
 // View states
 type View = 'hero' | 'shop' | 'form' | 'success';
@@ -13,11 +15,46 @@ const App = () => {
   const [currentView, setCurrentView] = useState<View>('hero');
   const [orderConfig, setOrderConfig] = useState<{game: GameType, design: DesignType} | null>(null);
   const [language, setLanguage] = useState<Language>('uz');
+  const [user, setUser] = useState<User | null>(null);
+  const [authLoading, setAuthLoading] = useState(true);
 
   const t = translations[language];
 
-  const handleStart = () => {
-    setCurrentView('shop');
+  useEffect(() => {
+    const unsubscribe = onAuthStateChanged(auth, (currentUser) => {
+      if (currentUser) {
+        setUser({
+          uid: currentUser.uid,
+          displayName: currentUser.displayName,
+          email: currentUser.email,
+          photoURL: currentUser.photoURL
+        });
+      } else {
+        setUser(null);
+      }
+      setAuthLoading(false);
+    });
+
+    return () => unsubscribe();
+  }, []);
+
+  const handleStart = async () => {
+    if (!user) {
+      try {
+        await loginWithGoogle();
+        // After successful login, move to shop
+        setCurrentView('shop');
+      } catch (error) {
+        // Error handling if needed
+      }
+    } else {
+      setCurrentView('shop');
+    }
+  };
+
+  const handleLogout = async () => {
+    await logout();
+    setCurrentView('hero');
   };
 
   const handleShopSelection = (game: GameType, design: DesignType) => {
@@ -42,6 +79,14 @@ const App = () => {
     setCurrentView('hero');
   };
 
+  if (authLoading) {
+    return (
+      <div className="min-h-screen bg-cyber-black flex items-center justify-center">
+        <LoaderIcon className="w-10 h-10 text-cyber-primary" />
+      </div>
+    );
+  }
+
   return (
     <div className="font-sans antialiased text-white min-h-screen">
       {currentView === 'hero' && (
@@ -49,6 +94,8 @@ const App = () => {
           onStart={handleStart} 
           language={language}
           setLanguage={setLanguage}
+          user={user}
+          onLogout={handleLogout}
         />
       )}
       
@@ -67,6 +114,7 @@ const App = () => {
           onBack={handleBackToShop}
           onSuccess={handleSuccess}
           language={language}
+          user={user}
         />
       )}
 

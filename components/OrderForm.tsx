@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { DesignType, GameType, OrderFormState, ValidationErrors, Language } from '../types';
+import { DesignType, GameType, OrderFormState, ValidationErrors, Language, User } from '../types';
 import { sendOrderToTelegram } from '../services/telegramService';
 import { LoaderIcon } from './Icons';
 import { translations } from '../utils/translations';
@@ -10,15 +10,30 @@ interface OrderFormProps {
   onBack: () => void;
   onSuccess: () => void;
   language: Language;
+  user: User | null;
 }
 
 type Carrier = { name: string; color: string; border: string } | null;
 
-const OrderForm: React.FC<OrderFormProps> = ({ selectedGame, selectedDesign, onBack, onSuccess, language }) => {
+const OrderForm: React.FC<OrderFormProps> = ({ selectedGame, selectedDesign, onBack, onSuccess, language, user }) => {
   const t = translations[language];
+  
+  // Split Google name into First/Last
+  const getNameParts = () => {
+    if (!user?.displayName) return { first: '', last: '' };
+    const parts = user.displayName.split(' ');
+    return {
+      first: parts[0] || '',
+      last: parts.slice(1).join(' ') || ''
+    };
+  };
+
+  const initialNames = getNameParts();
+
   const [formData, setFormData] = useState<Omit<OrderFormState, 'selectedGame' | 'selectedDesign'>>({
-    firstName: '',
-    lastName: '',
+    firstName: initialNames.first,
+    lastName: initialNames.last,
+    email: user?.email || '',
     phone: '+998',
     telegramUsername: '',
     comment: '',
@@ -107,6 +122,23 @@ const OrderForm: React.FC<OrderFormProps> = ({ selectedGame, selectedDesign, onB
              <span className="uppercase">{t.designs[selectedDesign]}</span>
            </div>
         </div>
+
+        {/* User Badge in Form */}
+        {user && (
+          <div className="mb-6 flex items-center gap-3 bg-cyber-dark/50 border border-cyber-primary/30 p-3 rounded-lg">
+            {user.photoURL ? (
+              <img src={user.photoURL} alt="User" className="w-10 h-10 rounded-full border border-cyber-primary" />
+            ) : (
+              <div className="w-10 h-10 rounded-full bg-cyber-primary/20 flex items-center justify-center text-cyber-primary font-bold">
+                {user.displayName?.[0] || 'U'}
+              </div>
+            )}
+            <div>
+              <div className="text-xs text-gray-400 uppercase tracking-wider">Logged in as</div>
+              <div className="text-sm font-bold text-white">{user.email}</div>
+            </div>
+          </div>
+        )}
 
         <form onSubmit={handleSubmit} className="space-y-6">
           
