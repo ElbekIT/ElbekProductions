@@ -1,0 +1,151 @@
+import { Language } from '../types';
+
+export const translations = {
+  uz: {
+    heroTitle: "Professional YouTube Dizayn",
+    heroSubtitle: "Kanalingizni yangi bosqichga olib chiqing. Bizning xizmatlarimiz hozircha mutlaqo bepul.",
+    startBtn: "Buyurtma berish",
+    back: "Orqaga",
+    step1: "Mavzu (O'yin) tanlang",
+    step2: "Dizayn turini tanlang",
+    next: "Davom etish",
+    formTitle: "Buyurtma Tafsilotlari",
+    firstName: "Ism",
+    lastName: "Familiya",
+    phone: "Telefon raqam",
+    tgUsername: "Telegram Username",
+    comment: "To'liq Izoh",
+    commentPlace: "Dizaynda nimalar bo'lishi kerak? Ranglar, yozuvlar...",
+    submit: "Buyurtmani Yuborish",
+    successTitle: "Qabul qilindi!",
+    successText: "Sizning buyurtmangiz yuborildi. Tez orada administratorlarimiz siz bilan bog'lanishadi.",
+    homeBtn: "Bosh sahifa",
+    freeBadge: "BEPUL XIZMAT",
+    warningFake: "Iltimos, haqiqiy ma'lumot kiriting!",
+    games: {
+      pubg: "PUBG Mobile",
+      minecraft: "Minecraft",
+      csgo: "CS:GO / CS2",
+      vlog: "Vlog / Lifestyle",
+      gta: "GTA V",
+      valorant: "Valorant",
+      freefire: "Free Fire",
+      roblox: "Roblox",
+      fifa: "EA FC (FIFA)",
+      cod: "Call of Duty",
+      dota: "Dota 2",
+      standoff: "Standoff 2",
+      other: "Boshqa"
+    },
+    designs: {
+      preview: "YouTube Preview",
+      banner: "Kanal Banneri",
+      avatar: "Avatarka",
+      logo: "Logotip"
+    },
+    designDesc: {
+      preview: "Videolar uchun muqova",
+      banner: "Kanal shapkasi",
+      avatar: "Profil rasmi",
+      logo: "Brending"
+    }
+  },
+  ru: {
+    heroTitle: "Профессиональный YouTube Дизайн",
+    heroSubtitle: "Выведите свой канал на новый уровень. Наш сервис пока абсолютно бесплатен.",
+    startBtn: "Заказать сейчас",
+    back: "Назад",
+    step1: "Выберите Тему (Игру)",
+    step2: "Выберите Тип Дизайна",
+    next: "Продолжить",
+    formTitle: "Детали Заказа",
+    firstName: "Имя",
+    lastName: "Фамилия",
+    phone: "Телефон",
+    tgUsername: "Telegram Username",
+    comment: "Комментарий",
+    commentPlace: "Что должно быть в дизайне? Цвета, текст...",
+    submit: "Отправить Заказ",
+    successTitle: "Принято!",
+    successText: "Ваш заказ был отправлен. Наши администраторы свяжутся с вами в ближайшее время.",
+    homeBtn: "На главную",
+    freeBadge: "БЕСПЛАТНО",
+    warningFake: "Пожалуйста, введите реальные данные!",
+    games: {
+      pubg: "PUBG Mobile",
+      minecraft: "Minecraft",
+      csgo: "CS:GO / CS2",
+      vlog: "Влог / Лайфстайл",
+      gta: "GTA V",
+      valorant: "Valorant",
+      freefire: "Free Fire",
+      roblox: "Roblox",
+      fifa: "EA FC (FIFA)",
+      cod: "Call of Duty",
+      dota: "Dota 2",
+      standoff: "Standoff 2",
+      other: "Другое"
+    },
+    designs: {
+      preview: "YouTube Превью",
+      banner: "Баннер Канала",
+      avatar: "Аватарка",
+      logo: "Логотип"
+    },
+    designDesc: {
+      preview: "Обложка для видео",
+      banner: "Шапка канала",
+      avatar: "Фото профиля",
+      logo: "Брендинг"
+    }
+  },
+  en: {
+    heroTitle: "Professional YouTube Design",
+    heroSubtitle: "Take your channel to the next level. Our services are currently completely free.",
+    startBtn: "Order Now",
+    back: "Back",
+    step1: "Select Theme (Game)",
+    step2: "Select Design Type",
+    next: "Continue",
+    formTitle: "Order Details",
+    firstName: "First Name",
+    lastName: "Last Name",
+    phone: "Phone Number",
+    tgUsername: "Telegram Username",
+    comment: "Detailed Comment",
+    commentPlace: "Describe your design needs. Colors, text, ideas...",
+    submit: "Submit Order",
+    successTitle: "Received!",
+    successText: "Your order has been sent. Our administrators will contact you shortly.",
+    homeBtn: "Back to Home",
+    freeBadge: "FREE SERVICE",
+    warningFake: "Please enter real information!",
+    games: {
+      pubg: "PUBG Mobile",
+      minecraft: "Minecraft",
+      csgo: "CS:GO / CS2",
+      vlog: "Vlog / Lifestyle",
+      gta: "GTA V",
+      valorant: "Valorant",
+      freefire: "Free Fire",
+      roblox: "Roblox",
+      fifa: "EA FC (FIFA)",
+      cod: "Call of Duty",
+      dota: "Dota 2",
+      standoff: "Standoff 2",
+      other: "Other"
+    },
+    designs: {
+      preview: "YouTube Thumbnail",
+      banner: "Channel Banner",
+      avatar: "Avatar",
+      logo: "Logo"
+    },
+    designDesc: {
+      preview: "Cover for videos",
+      banner: "Channel art",
+      avatar: "Profile picture",
+      logo: "Branding"
+    }
+  }
+};

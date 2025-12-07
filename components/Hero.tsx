@@ -1,0 +1,98 @@
+import React from 'react';
+import { ArrowRightIcon, GlobeIcon } from './Icons';
+import { Language } from '../types';
+import { translations } from '../utils/translations';
+
+interface HeroProps {
+  onStart: () => void;
+  language: Language;
+  setLanguage: (lang: Language) => void;
+}
+
+const Hero: React.FC<HeroProps> = ({ onStart, language, setLanguage }) => {
+  const t = translations[language];
+
+  return (
+    <div className="min-h-screen flex flex-col relative overflow-hidden">
+      
+      {/* Language Switcher - Mobile Optimized */}
+      <div className="absolute top-0 w-full p-4 flex justify-between items-center z-50 bg-gradient-to-b from-black/80 to-transparent md:bg-none">
+        <div className="flex gap-1 text-[10px] font-display tracking-widest text-cyber-accent">
+          PRO DESIGN STUDIO v2.0
+        </div>
+        <div className="flex border border-white/10 bg-black/50 backdrop-blur-md rounded-none">
+          {(['uz', 'ru', 'en'] as Language[]).map((lang) => (
+            <button
+              key={lang}
+              onClick={() => setLanguage(lang)}
+              className={`px-3 py-2 text-xs font-bold uppercase tracking-wider transition-all border-l border-white/5 first:border-0 ${
+                language === lang 
+                  ? 'bg-cyber-primary text-white' 
+                  : 'text-gray-500 hover:text-white hover:bg-white/5'
+              }`}
+            >
+              {lang}
+            </button>
+          ))}
+        </div>
+      </div>
+
+      <div className="flex-1 flex flex-col items-center justify-center text-center px-6 pt-20 pb-10 max-w-5xl mx-auto w-full">
+        
+        {/* Badge */}
+        <div className="mb-8 relative group">
+          <div className="absolute -inset-1 bg-gradient-to-r from-cyber-primary to-cyber-accent rounded-sm blur opacity-25 group-hover:opacity-75 transition duration-1000 group-hover:duration-200"></div>
+          <div className="relative px-6 py-2 bg-black border border-cyber-primary/50 text-cyber-primary text-sm font-bold tracking-[0.2em] uppercase cyber-border">
+            {t.freeBadge}
+          </div>
+        </div>
+
+        {/* Title */}
+        <h1 className="text-5xl md:text-8xl lg:text-9xl font-display font-black tracking-tighter leading-none mb-6">
+          <span className="block text-white mix-blend-difference">{t.heroTitle.split(' ')[0]}</span>
+          <span className="text-transparent bg-clip-text bg-gradient-to-r from-cyber-primary via-white to-cyber-accent">
+             {t.heroTitle.split(' ').slice(1).join(' ')}
+          </span>
+        </h1>
+        
+        <p className="text-lg md:text-2xl text-gray-400 max-w-2xl mx-auto mb-12 font-light border-l-2 border-cyber-primary/30 pl-6 text-left md:text-center md:border-0 md:pl-0">
+          {t.heroSubtitle}
+        </p>
+
+        {/* Main Button */}
+        <button
+          onClick={onStart}
+          className="group relative inline-flex items-center gap-4 px-12 py-6 bg-white text-black font-display font-black text-xl tracking-wide cyber-input hover:bg-cyber-primary hover:text-white transition-all duration-300"
+        >
+          {t.startBtn}
+          <ArrowRightIcon className="w-6 h-6 group-hover:translate-x-2 transition-transform" />
+          
+          {/* Button decoration */}
+          <div className="absolute bottom-0 right-0 w-3 h-3 bg-black transform translate-x-1/2 translate-y-1/2 rotate-45"></div>
+        </button>
+
+        {/* Stats Grid - Mobile Optimized */}
+        <div className="mt-20 w-full grid grid-cols-2 md:grid-cols-4 gap-3 md:gap-6">
+          {Object.entries(t.designs).map(([key, label], idx) => (
+            <div key={key} className="relative group border border-white/5 bg-white/[0.02] p-4 flex flex-col items-center md:items-start transition-all hover:border-cyber-primary/50">
+              <div className="text-2xl mb-2 text-cyber-accent opacity-80 group-hover:opacity-100">
+                 {idx === 0 ? '01' : idx === 1 ? '02' : idx === 2 ? '03' : '04'}
+              </div>
+              <div className="font-bold text-gray-300 text-sm md:text-base uppercase tracking-wider">{label}</div>
+              <div className="absolute top-0 right-0 w-2 h-2 border-t border-r border-white/20 group-hover:border-cyber-primary transition-colors"></div>
+              <div className="absolute bottom-0 left-0 w-2 h-2 border-b border-l border-white/20 group-hover:border-cyber-primary transition-colors"></div>
+            </div>
+          ))}
+        </div>
+      </div>
+      
+      {/* Decorative Footer */}
+      <div className="w-full border-t border-white/5 py-4 px-6 flex justify-between text-[10px] text-gray-600 font-mono uppercase">
+        <span>System: Online</span>
+        <span>Secure Connection</span>
+      </div>
+    </div>
+  );
+};
+
+export default Hero;
