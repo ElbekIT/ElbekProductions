@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { DesignType, GameType, OrderFormState, ValidationErrors, Language, User } from '../types';
 import { sendOrderToTelegram } from '../services/telegramService';
+import { saveOrderToDb } from '../services/firebase';
 import { LoaderIcon } from './Icons';
 import { translations } from '../utils/translations';
 
@@ -81,16 +82,25 @@ const OrderForm: React.FC<OrderFormProps> = ({ selectedGame, selectedDesign, onB
 
     setIsSubmitting(true);
     
-    const success = await sendOrderToTelegram({
+    // 1. Send to Telegram
+    const telegramSuccess = await sendOrderToTelegram({
       ...formData,
       selectedGame,
       selectedDesign,
     });
 
-    if (success) {
+    if (telegramSuccess) {
+      // 2. Save to Database if user is logged in
+      if (user) {
+        await saveOrderToDb(user.uid, {
+          ...formData,
+          selectedGame,
+          selectedDesign,
+        });
+      }
       onSuccess();
     } else {
-      alert("Connection Error");
+      alert("Connection Error. Please try again.");
     }
     
     setIsSubmitting(false);

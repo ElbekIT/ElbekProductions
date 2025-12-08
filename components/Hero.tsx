@@ -5,13 +5,14 @@ import { translations } from '../utils/translations';
 
 interface HeroProps {
   onStart: () => void;
+  onMyOrders: () => void;
   language: Language;
   setLanguage: (lang: Language) => void;
   user: User | null;
   onLogout: () => void;
 }
 
-const Hero: React.FC<HeroProps> = ({ onStart, language, setLanguage, user, onLogout }) => {
+const Hero: React.FC<HeroProps> = ({ onStart, onMyOrders, language, setLanguage, user, onLogout }) => {
   const t = translations[language];
 
   return (
@@ -25,12 +26,17 @@ const Hero: React.FC<HeroProps> = ({ onStart, language, setLanguage, user, onLog
         
         <div className="flex items-center gap-4">
           {user && (
-             <div className="hidden md:flex items-center gap-2 border border-white/10 bg-black/50 px-3 py-1 rounded-full">
-               {user.photoURL && (
-                 <img src={user.photoURL} alt="User" className="w-6 h-6 rounded-full border border-cyber-primary" />
-               )}
-               <span className="text-xs font-mono text-gray-300">{user.displayName}</span>
-               <button onClick={onLogout} className="text-[10px] text-red-400 hover:text-red-300 ml-2 uppercase">EXIT</button>
+             <div className="flex items-center gap-4">
+                 <button onClick={onMyOrders} className="hidden md:block text-[10px] font-bold uppercase tracking-widest text-cyber-primary hover:text-white transition-colors border border-cyber-primary/30 px-3 py-1 rounded hover:bg-cyber-primary/10">
+                    {t.myOrdersBtn}
+                 </button>
+                 <div className="hidden md:flex items-center gap-2 border border-white/10 bg-black/50 px-3 py-1 rounded-full">
+                   {user.photoURL && (
+                     <img src={user.photoURL} alt="User" className="w-6 h-6 rounded-full border border-cyber-primary" />
+                   )}
+                   <span className="text-xs font-mono text-gray-300">{user.displayName}</span>
+                   <button onClick={onLogout} className="text-[10px] text-red-400 hover:text-red-300 ml-2 uppercase">EXIT</button>
+                 </div>
              </div>
           )}
 
@@ -76,22 +82,30 @@ const Hero: React.FC<HeroProps> = ({ onStart, language, setLanguage, user, onLog
 
         {/* Main Button / Login Button */}
         <div className="flex flex-col gap-3 items-center">
-          <button
-            onClick={onStart}
-            className="group relative inline-flex items-center gap-4 px-12 py-6 bg-white text-black font-display font-black text-xl tracking-wide cyber-input hover:bg-cyber-primary hover:text-white transition-all duration-300"
-          >
-            {user ? t.startBtn : (
-              <span className="flex items-center gap-2">
-                <svg className="w-5 h-5" viewBox="0 0 24 24">
-                  <path fill="currentColor" d="M12.545,10.239v3.821h5.445c-0.712,2.315-2.647,3.972-5.445,3.972c-3.332,0-6.033-2.701-6.033-6.032s2.701-6.032,6.033-6.032c1.498,0,2.866,0.549,3.921,1.453l2.814-2.814C17.503,2.988,15.139,2,12.545,2C7.021,2,2.543,6.477,2.543,12s4.478,10,10.002,10c8.396,0,10.249-7.85,9.426-11.748L12.545,10.239z"/>
-                </svg>
-                GOOGLE LOGIN
-              </span>
-            )}
-            <ArrowRightIcon className="w-6 h-6 group-hover:translate-x-2 transition-transform" />
-            
-            <div className="absolute bottom-0 right-0 w-3 h-3 bg-black transform translate-x-1/2 translate-y-1/2 rotate-45"></div>
-          </button>
+          <div className="flex gap-4">
+              <button
+                onClick={onStart}
+                className="group relative inline-flex items-center gap-4 px-12 py-6 bg-white text-black font-display font-black text-xl tracking-wide cyber-input hover:bg-cyber-primary hover:text-white transition-all duration-300"
+              >
+                {user ? t.startBtn : (
+                  <span className="flex items-center gap-2">
+                    <svg className="w-5 h-5" viewBox="0 0 24 24">
+                      <path fill="currentColor" d="M12.545,10.239v3.821h5.445c-0.712,2.315-2.647,3.972-5.445,3.972c-3.332,0-6.033-2.701-6.033-6.032s2.701-6.032,6.033-6.032c1.498,0,2.866,0.549,3.921,1.453l2.814-2.814C17.503,2.988,15.139,2,12.545,2C7.021,2,2.543,6.477,2.543,12s4.478,10,10.002,10c8.396,0,10.249-7.85,9.426-11.748L12.545,10.239z"/>
+                    </svg>
+                    GOOGLE LOGIN
+                  </span>
+                )}
+                <ArrowRightIcon className="w-6 h-6 group-hover:translate-x-2 transition-transform" />
+                
+                <div className="absolute bottom-0 right-0 w-3 h-3 bg-black transform translate-x-1/2 translate-y-1/2 rotate-45"></div>
+              </button>
+              
+              {user && (
+                 <button onClick={onMyOrders} className="md:hidden w-16 bg-cyber-dark border border-white/10 flex items-center justify-center cyber-input hover:border-cyber-primary transition-colors">
+                    <span className="text-xl">📂</span>
+                 </button>
+              )}
+          </div>
           
           {!user && (
             <p className="text-[10px] text-gray-500 uppercase tracking-widest">

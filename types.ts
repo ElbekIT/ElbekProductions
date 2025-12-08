@@ -20,6 +20,13 @@ export interface OrderFormState {
   selectedDesign: DesignType;
 }
 
+export interface Order extends OrderFormState {
+  id: string;
+  userId: string;
+  createdAt: number;
+  status: 'sent' | 'processing' | 'completed';
+}
+
 export interface ValidationErrors {
   firstName?: string;
   lastName?: string;

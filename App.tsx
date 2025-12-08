@@ -2,6 +2,7 @@ import React, { useState, useEffect } from 'react';
 import Hero from './components/Hero';
 import ShopSelection from './components/ShopSelection';
 import OrderForm from './components/OrderForm';
+import MyOrders from './components/MyOrders';
 import { DesignType, GameType, Language, User } from './types';
 import { CheckCircleIcon, LoaderIcon } from './components/Icons';
 import { translations } from './utils/translations';
@@ -9,7 +10,7 @@ import { auth, loginWithGoogle, logout } from './services/firebase';
 import { onAuthStateChanged } from 'firebase/auth';
 
 // View states
-type View = 'hero' | 'shop' | 'form' | 'success';
+type View = 'hero' | 'shop' | 'form' | 'success' | 'my-orders';
 
 const App = () => {
   const [currentView, setCurrentView] = useState<View>('hero');
@@ -76,6 +77,10 @@ const App = () => {
   const handleSuccess = () => {
     setCurrentView('success');
   };
+  
+  const handleMyOrders = () => {
+    setCurrentView('my-orders');
+  }
 
   const resetApp = () => {
     setOrderConfig(null);
@@ -136,6 +141,7 @@ const App = () => {
       {currentView === 'hero' && (
         <Hero 
           onStart={handleStart} 
+          onMyOrders={handleMyOrders}
           language={language}
           setLanguage={setLanguage}
           user={user}
@@ -161,6 +167,14 @@ const App = () => {
           user={user}
         />
       )}
+      
+      {currentView === 'my-orders' && user && (
+        <MyOrders
+          user={user}
+          language={language}
+          onBack={handleBackToHero}
+        />
+      )}
 
       {currentView === 'success' && (
         <div className="min-h-screen flex items-center justify-center px-4 animate-fade-in relative z-50">
@@ -173,12 +187,23 @@ const App = () => {
             <p className="text-gray-300 mb-8 leading-relaxed">
               {t.successText}
             </p>
-            <button
-              onClick={resetApp}
-              className="w-full py-4 bg-white/10 hover:bg-white/20 text-white rounded-xl font-bold transition-all border border-white/10"
-            >
-              {t.homeBtn}
-            </button>
+            <div className="flex flex-col gap-3">
+               <button
+                 onClick={() => {
+                   resetApp();
+                   if(user) setCurrentView('my-orders');
+                 }}
+                 className="w-full py-4 bg-cyber-primary/20 hover:bg-cyber-primary/40 text-cyber-primary hover:text-white rounded-xl font-bold transition-all border border-cyber-primary/50"
+               >
+                 {t.myOrdersBtn}
+               </button>
+               <button
+                 onClick={resetApp}
+                 className="w-full py-4 bg-white/5 hover:bg-white/10 text-white rounded-xl font-bold transition-all border border-white/10"
+               >
+                 {t.homeBtn}
+               </button>
+            </div>
           </div>
         </div>
       )}
