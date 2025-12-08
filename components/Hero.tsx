@@ -19,8 +19,8 @@ const Hero: React.FC<HeroProps> = ({ onStart, language, setLanguage, user, onLog
       
       {/* Header Bar */}
       <div className="absolute top-0 w-full p-4 flex justify-between items-center z-50 bg-gradient-to-b from-black/80 to-transparent md:bg-none">
-        <div className="flex gap-1 text-[10px] font-display font-bold tracking-[0.2em] text-cyber-accent uppercase">
-          ELBEK PRODUCTIONS
+        <div className="flex gap-1 text-[10px] font-display tracking-widest text-cyber-accent uppercase">
+          ELBEK PRODUCTIONS v2.0
         </div>
         
         <div className="flex items-center gap-4">
