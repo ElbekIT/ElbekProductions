@@ -1,7 +1,7 @@
 import { initializeApp } from "firebase/app";
 import { getAuth, GoogleAuthProvider, signInWithPopup, signOut } from "firebase/auth";
 import { getAnalytics } from "firebase/analytics";
-import { getDatabase, ref, push, set, query, orderByChild, equalTo, get } from "firebase/database";
+import { getDatabase, ref, push, set, query, limitToLast, get } from "firebase/database";
 import { Order, OrderFormState } from "../types";
 
 const firebaseConfig = {
@@ -55,9 +55,10 @@ export const saveOrderToDb = async (userId: string, orderData: OrderFormState) =
     };
 
     await set(newOrderRef, order);
+    console.log("✅ Order saved successfully to DB:", newOrderRef.key);
     return true;
   } catch (error) {
-    console.error("Error saving order:", error);
+    console.error("❌ Error saving order to DB:", error);
     return false;
   }
 };
@@ -65,16 +66,32 @@ export const saveOrderToDb = async (userId: string, orderData: OrderFormState) =
 export const getUserOrders = async (userId: string): Promise<Order[]> => {
   try {
     const ordersRef = ref(db, 'orders');
-    const userOrdersQuery = query(ordersRef, orderByChild('userId'), equalTo(userId));
-    const snapshot = await get(userOrdersQuery);
+    
+    // FETCH ALL STRATEGY
+    // We fetch the last 200 orders globally and filter client-side.
+    // This avoids "Index not defined" errors in Firebase Rules.
+    const recentOrdersQuery = query(ordersRef, limitToLast(200));
+    const snapshot = await get(recentOrdersQuery);
     
     if (snapshot.exists()) {
       const data = snapshot.val();
-      return Object.values(data).sort((a: any, b: any) => b.createdAt - a.createdAt) as Order[];
+      // Convert Object { key: val } to Array [val]
+      const allOrders = Object.values(data) as Order[];
+      
+      console.log(`Downloaded ${allOrders.length} total orders. Filtering for user: ${userId}`);
+
+      // Filter manually by userId to ensure accuracy
+      const userOrders = allOrders.filter(order => order.userId === userId);
+      
+      // Sort by date descending (newest first)
+      return userOrders.sort((a, b) => b.createdAt - a.createdAt);
+    } else {
+      console.log("No orders found in database at all.");
     }
+    
     return [];
   } catch (error) {
-    console.error("Error fetching orders:", error);
+    console.error("❌ Error fetching orders:", error);
     return [];
   }
 };

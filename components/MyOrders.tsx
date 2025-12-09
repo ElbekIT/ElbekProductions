@@ -2,7 +2,7 @@ import React, { useEffect, useState } from 'react';
 import { Language, Order, User } from '../types';
 import { translations } from '../utils/translations';
 import { getUserOrders } from '../services/firebase';
-import { LoaderIcon, ArrowRightIcon } from './Icons';
+import { LoaderIcon } from './Icons';
 
 interface MyOrdersProps {
   user: User;
@@ -15,12 +15,16 @@ const MyOrders: React.FC<MyOrdersProps> = ({ user, language, onBack }) => {
   const [orders, setOrders] = useState<Order[]>([]);
   const [loading, setLoading] = useState(true);
 
+  const fetchOrders = async () => {
+    setLoading(true);
+    // Add small artificial delay to show loader, makes user feel "work" is happening
+    await new Promise(r => setTimeout(r, 500));
+    const data = await getUserOrders(user.uid);
+    setOrders(data);
+    setLoading(false);
+  };
+
   useEffect(() => {
-    const fetchOrders = async () => {
-      const data = await getUserOrders(user.uid);
-      setOrders(data);
-      setLoading(false);
-    };
     fetchOrders();
   }, [user.uid]);
 
@@ -41,20 +45,42 @@ const MyOrders: React.FC<MyOrdersProps> = ({ user, language, onBack }) => {
         <button onClick={onBack} className="text-gray-400 hover:text-white font-mono uppercase text-xs tracking-widest flex items-center gap-2">
           <span>&lt;</span> {t.back}
         </button>
-        <h2 className="text-xl md:text-2xl font-display font-bold text-white uppercase tracking-wider">
-           {t.myOrdersBtn}
-        </h2>
+        
+        <div className="flex items-center gap-4">
+             <button 
+                onClick={fetchOrders}
+                className="text-cyber-primary hover:text-white text-xs uppercase tracking-widest border border-cyber-primary/30 px-3 py-1 rounded hover:bg-cyber-primary/20 transition-colors flex items-center gap-2 active:scale-95"
+             >
+                <span className={loading ? "animate-spin" : ""}>↻</span> {language === 'uz' ? 'Yangilash' : 'Refresh'}
+             </button>
+             <h2 className="text-xl md:text-2xl font-display font-bold text-white uppercase tracking-wider hidden md:block">
+                {t.myOrdersBtn}
+             </h2>
+        </div>
       </div>
+
+      <h2 className="text-xl font-display font-bold text-white uppercase tracking-wider md:hidden mb-6">
+           {t.myOrdersBtn}
+      </h2>
 
       {loading ? (
         <div className="flex-1 flex flex-col items-center justify-center min-h-[50vh]">
           <LoaderIcon className="w-10 h-10 text-cyber-primary" />
-          <p className="mt-4 text-xs font-mono text-gray-500 animate-pulse">LOADING DATA...</p>
+          <p className="mt-4 text-xs font-mono text-gray-500 animate-pulse">DATABASE SYNC...</p>
         </div>
       ) : orders.length === 0 ? (
         <div className="flex-1 flex flex-col items-center justify-center min-h-[50vh] border border-white/5 bg-white/[0.02] rounded-lg p-10">
           <div className="text-6xl mb-4 opacity-20">📂</div>
-          <p className="text-gray-500 font-mono uppercase tracking-widest">{t.noOrders}</p>
+          <p className="text-gray-500 font-mono uppercase tracking-widest text-center">{t.noOrders}</p>
+          <p className="text-xs text-gray-700 mt-2 text-center max-w-xs">
+            Agar hozir buyurtma bergan bo'lsangiz, "Yangilash" tugmasini bosing.
+          </p>
+          <button 
+             onClick={fetchOrders}
+             className="mt-6 px-6 py-2 bg-cyber-dark border border-cyber-primary/30 text-cyber-primary hover:bg-cyber-primary hover:text-white transition-all text-xs uppercase tracking-widest"
+          >
+             Yangilash
+          </button>
         </div>
       ) : (
         <div className="space-y-4">
@@ -73,41 +99,33 @@ const MyOrders: React.FC<MyOrdersProps> = ({ user, language, onBack }) => {
 
                <div className="flex flex-col md:flex-row md:items-center gap-6">
                  {/* Icon */}
-                 <div className="w-12 h-12 bg-cyber-primary/10 border border-cyber-primary/30 flex items-center justify-center text-2xl">
+                 <div className="w-12 h-12 bg-cyber-primary/10 border border-cyber-primary/30 flex items-center justify-center text-2xl shrink-0">
                     {order.selectedDesign === 'preview' ? '🖼' : order.selectedDesign === 'banner' ? '🚩' : order.selectedDesign === 'avatar' ? '👤' : '🎨'}
                  </div>
 
                  {/* Main Info */}
-                 <div className="flex-1">
+                 <div className="flex-1 min-w-0">
                     <div className="flex flex-col md:flex-row md:items-baseline gap-2 mb-1">
-                       <h3 className="text-lg font-bold text-white uppercase tracking-wide">
+                       <h3 className="text-lg font-bold text-white uppercase tracking-wide truncate">
                           {t.games[order.selectedGame]}
                        </h3>
-                       <span className="text-sm text-cyber-primary uppercase">
+                       <span className="text-sm text-cyber-primary uppercase shrink-0">
                           // {t.designs[order.selectedDesign]}
                        </span>
                     </div>
                     
-                    <div className="grid grid-cols-1 md:grid-cols-2 gap-x-8 gap-y-2 text-xs font-mono text-gray-500 mt-2">
+                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-x-8 gap-y-2 text-xs font-mono text-gray-500 mt-2">
                        <div className="flex gap-2">
-                          <span>ID:</span>
-                          <span className="text-gray-300">{order.id.slice(-8).toUpperCase()}</span>
+                          <span className="opacity-50">ID:</span>
+                          <span className="text-gray-300">{order.id.slice(-6).toUpperCase()}</span>
                        </div>
                        <div className="flex gap-2">
-                          <span>{t.date}:</span>
+                          <span className="opacity-50">{t.date}:</span>
                           <span className="text-gray-300">{formatDate(order.createdAt)}</span>
-                       </div>
-                       <div className="flex gap-2">
-                          <span>Tel:</span>
-                          <span className="text-gray-300">{order.phone}</span>
-                       </div>
-                       <div className="flex gap-2">
-                          <span>TG:</span>
-                          <span className="text-gray-300">{order.telegramUsername}</span>
                        </div>
                     </div>
                     
-                    <div className="mt-4 p-3 bg-black/30 border-l-2 border-cyber-accent/50 text-sm text-gray-400 italic">
+                    <div className="mt-4 p-3 bg-black/30 border-l-2 border-cyber-accent/50 text-sm text-gray-400 italic break-words">
                        "{order.comment}"
                     </div>
                  </div>

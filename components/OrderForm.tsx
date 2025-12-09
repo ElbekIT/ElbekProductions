@@ -82,28 +82,42 @@ const OrderForm: React.FC<OrderFormProps> = ({ selectedGame, selectedDesign, onB
 
     setIsSubmitting(true);
     
-    // 1. Send to Telegram
-    const telegramSuccess = await sendOrderToTelegram({
-      ...formData,
-      selectedGame,
-      selectedDesign,
-    });
+    try {
+      // 1. Send to Telegram
+      const telegramSuccess = await sendOrderToTelegram({
+        ...formData,
+        selectedGame,
+        selectedDesign,
+      });
 
-    if (telegramSuccess) {
-      // 2. Save to Database if user is logged in
-      if (user) {
-        await saveOrderToDb(user.uid, {
-          ...formData,
-          selectedGame,
-          selectedDesign,
-        });
+      if (telegramSuccess) {
+        // 2. Save to Database if user is logged in
+        if (user) {
+          try {
+            const dbResult = await saveOrderToDb(user.uid, {
+              ...formData,
+              selectedGame,
+              selectedDesign,
+            });
+
+            if (!dbResult) {
+              alert("Buyurtma Telegramga yuborildi, lekin tarixda (My Orders) saqlashda muammo bo'ldi. Internetni tekshiring.");
+            }
+          } catch (dbError) {
+             console.error("DB Save Critical Fail", dbError);
+             // We still succeed because Telegram got it
+          }
+        }
+        onSuccess();
+      } else {
+        alert("Xatolik: Botga ulanib bo'lmadi. Internet aloqasini tekshiring.");
       }
-      onSuccess();
-    } else {
-      alert("Connection Error. Please try again.");
+    } catch (err) {
+      console.error(err);
+      alert("Tizim xatosi yuz berdi.");
+    } finally {
+      setIsSubmitting(false);
     }
-    
-    setIsSubmitting(false);
   };
 
   const handlePhoneChange = (e: React.ChangeEvent<HTMLInputElement>) => {
