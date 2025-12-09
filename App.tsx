@@ -5,6 +5,7 @@ import OrderForm from './components/OrderForm';
 import MyOrders from './components/MyOrders';
 import AdminPanel from './components/AdminPanel';
 import LocationVerifier from './components/LocationVerifier';
+import IntroLoader from './components/IntroLoader';
 import { DesignType, GameType, Language, User, VerifiedLocation } from './types';
 import { CheckCircleIcon, LoaderIcon, AlertCircleIcon } from './components/Icons';
 import { translations } from './utils/translations';
@@ -15,6 +16,7 @@ import { onAuthStateChanged } from 'firebase/auth';
 type View = 'hero' | 'location-verify' | 'shop' | 'form' | 'success' | 'my-orders' | 'admin' | 'banned';
 
 const App = () => {
+  const [showIntro, setShowIntro] = useState(true);
   const [currentView, setCurrentView] = useState<View>('hero');
   const [orderConfig, setOrderConfig] = useState<{game: GameType, design: DesignType} | null>(null);
   const [language, setLanguage] = useState<Language>('uz');
@@ -121,6 +123,12 @@ const App = () => {
     setCurrentView('hero');
   };
 
+  // 1. Show Cinematic Intro first
+  if (showIntro) {
+    return <IntroLoader onFinish={() => setShowIntro(false)} />;
+  }
+
+  // 2. Then show Auth Loader if firebase is still thinking (usually instant after intro)
   if (authLoading) {
     return (
       <div className="min-h-screen bg-[#020205] flex flex-col items-center justify-center relative overflow-hidden z-[100]">

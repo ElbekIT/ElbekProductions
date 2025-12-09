@@ -1,3 +1,4 @@
+
 import { Language } from '../types';
 
 // Helper to reduce file size: default to English if missing
@@ -43,7 +44,9 @@ const enBase = {
   locVerifyBtn: "Verify via Satellite (GPS)",
   locVerifying: "AI SATELLITE SCANNING...",
   locSuccess: "Identity Verified!",
-  locFail: "LOCATION MISMATCH DETECTED!",
+  locFail: "LOCATION MISMATCH!",
+  locFailRegion: "REGION MISMATCH! GPS DETECTED:",
+  locFailCity: "CITY MISMATCH! GPS DETECTED:",
   locWarning: "WARNING: SYSTEM SECURITY ACTIVE. 3 FALSE ATTEMPTS = PERMANENT BAN.",
   banMessage: "ACCESS DENIED. YOUR DEVICE HAS BEEN BANNED DUE TO LOCATION SPOOFING ATTEMPTS.",
   
@@ -74,7 +77,9 @@ export const translations: Record<Language, typeof enBase> = {
     locVerifyBtn: "Tekshirish (GPS)",
     locVerifying: "SUN'IY IDROK TEKSHIRMOQDA...",
     locSuccess: "Tasdiqlandi!",
-    locFail: "MANZIL MOS KELMADI!",
+    locFail: "DAVLAT XATOLIGI!",
+    locFailRegion: "VILOYAT XATOLIGI! GPS ANIQLAGAN JOY:",
+    locFailCity: "SHAHAR XATOLIGI! GPS ANIQLAGAN JOY:",
     locWarning: "DIQQAT! 3 marta noto'g'ri joylashuv kiritilsa, tizim sizni bloklaydi!",
     banMessage: "SIZ BIZNI ALDAB BOSHQA DAVLATNI TANLAB LOCATSIYAGA TO'GRI MOS KELMAGANLIGI SABAB BIZNI ALDAGANINGIZ UCHUN BAN QILINDINGIZ.",
     statusBusy: "Band", statusReviewing: "Ko'rilmoqda", statusCompleted: "Tayyor", statusSent: "Yuborildi"
@@ -99,28 +104,30 @@ export const translations: Record<Language, typeof enBase> = {
     locVerifyBtn: "Проверить (GPS)",
     locVerifying: "СКАНИРОВАНИЕ AI...",
     locSuccess: "Подтверждено!",
-    locFail: "ОШИБКА ЛОКАЦИИ!",
+    locFail: "ОШИБКА СТРАНЫ!",
+    locFailRegion: "ОШИБКА РЕГИОНА! GPS:",
+    locFailCity: "ОШИБКА ГОРОДА! GPS:",
     locWarning: "ВНИМАНИЕ! После 3 ошибок вы будете заблокированы!",
     banMessage: "ВЫ ЗАБЛОКИРОВАНЫ ЗА ПОПЫТКУ ОБМАНА СИСТЕМЫ И УКАЗАНИЕ ЛОЖНОЙ ЛОКАЦИИ.",
     statusBusy: "Занят", statusReviewing: "На проверке", statusCompleted: "Готово", statusSent: "Отправлено"
   }),
   // Adding core supported languages
-  tr: createTranslation(enBase, { heroTitle: "Profesyonel Tasarım", startBtn: "Sipariş Ver", locTitle: "Konum Doğrulama", locFail: "KONUM HATASI!", banMessage: "Konum sahtekarlığı nedeniyle yasaklandınız." }),
-  ar: createTranslation(enBase, { heroTitle: "تصميم احترافي", startBtn: "اطلب الآن", locTitle: "التحقق من الموقع", locFail: "خطأ في الموقع!", banMessage: "تم حظرك بسبب تزوير الموقع." }),
-  es: createTranslation(enBase, { heroTitle: "Diseño Profesional", startBtn: "Ordenar", locTitle: "Verificación", locFail: "¡ERROR DE UBICACIÓN!", banMessage: "Baneado por ubicación falsa." }),
-  fr: createTranslation(enBase, { heroTitle: "Design Professionnel", startBtn: "Commander", locTitle: "Vérification", locFail: "ERREUR DE LOCALISATION!", banMessage: "Banni pour fausse localisation." }),
-  de: createTranslation(enBase, { heroTitle: "Profi Design", startBtn: "Bestellen", locTitle: "Verifizierung", locFail: "STANDORTFEHLER!", banMessage: "Wegen Standortbetrugs gesperrt." }),
-  hi: createTranslation(enBase, { heroTitle: "पेशेवर डिजाइन", startBtn: "अभी ऑर्डर करें", locTitle: "सत्यापन", locFail: "स्थान त्रुटि!", banMessage: "स्थान धोखाधड़ी के कारण प्रतिबंधित।" }),
-  zh: createTranslation(enBase, { heroTitle: "专业设计", startBtn: "下单", locTitle: "验证", locFail: "位置错误！", banMessage: "因位置欺诈被封禁。" }),
-  ja: createTranslation(enBase, { heroTitle: "プロのデザイン", startBtn: "注文する", locTitle: "確認", locFail: "位置情報エラー！", banMessage: "位置情報の偽装により禁止されました。" }),
-  ko: createTranslation(enBase, { heroTitle: "전문 디자인", startBtn: "주문하기", locTitle: "확인", locFail: "위치 오류!", banMessage: "위치 위조로 인해 차단되었습니다." }),
-  it: createTranslation(enBase, { heroTitle: "Design Professionale", startBtn: "Ordina", locTitle: "Verifica", locFail: "ERRORE POSIZIONE!", banMessage: "Bannato per posizione falsa." }),
-  pt: createTranslation(enBase, { heroTitle: "Design Profissional", startBtn: "Pedir", locTitle: "Verificação", locFail: "ERRO DE LOCALIZAÇÃO!", banMessage: "Banido por localização falsa." }),
+  tr: createTranslation(enBase, { heroTitle: "Profesyonel Tasarım", startBtn: "Sipariş Ver", locTitle: "Konum Doğrulama", locFail: "ÜLKE HATASI!", locFailRegion: "BÖLGE HATASI!", locFailCity: "ŞEHİR HATASI!", banMessage: "Konum sahtekarlığı nedeniyle yasaklandınız." }),
+  ar: createTranslation(enBase, { heroTitle: "تصميم احترافي", startBtn: "اطلب الآن", locTitle: "التحقق من الموقع", locFail: "خطأ في الدولة!", locFailRegion: "خطأ في المنطقة!", locFailCity: "خطأ في المدينة!", banMessage: "تم حظرك بسبب تزوير الموقع." }),
+  es: createTranslation(enBase, { heroTitle: "Diseño Profesional", startBtn: "Ordenar", locTitle: "Verificación", locFail: "¡ERROR DE PAÍS!", locFailRegion: "¡ERROR DE REGIÓN!", locFailCity: "¡ERROR DE CIUDAD!", banMessage: "Baneado por ubicación falsa." }),
+  fr: createTranslation(enBase, { heroTitle: "Design Professionnel", startBtn: "Commander", locTitle: "Vérification", locFail: "ERREUR PAYS!", locFailRegion: "ERREUR RÉGION!", locFailCity: "ERREUR VILLE!", banMessage: "Banni pour fausse localisation." }),
+  de: createTranslation(enBase, { heroTitle: "Profi Design", startBtn: "Bestellen", locTitle: "Verifizierung", locFail: "LÄNDERFEHLER!", locFailRegion: "REGIONFEHLER!", locFailCity: "STADTFEHLER!", banMessage: "Wegen Standortbetrugs gesperrt." }),
+  hi: createTranslation(enBase, { heroTitle: "पेशेवर डिजाइन", startBtn: "अभी ऑर्डर करें", locTitle: "सत्यापन", locFail: "देश त्रुटि!", banMessage: "स्थान धोखाधड़ी के कारण प्रतिबंधित।" }),
+  zh: createTranslation(enBase, { heroTitle: "专业设计", startBtn: "下单", locTitle: "验证", locFail: "国家错误！", banMessage: "因位置欺诈被封禁。" }),
+  ja: createTranslation(enBase, { heroTitle: "プロのデザイン", startBtn: "注文する", locTitle: "確認", locFail: "国エラー！", banMessage: "位置情報の偽装により禁止されました。" }),
+  ko: createTranslation(enBase, { heroTitle: "전문 디자인", startBtn: "주문하기", locTitle: "확인", locFail: "국가 오류!", banMessage: "위치 위조로 인해 차단되었습니다." }),
+  it: createTranslation(enBase, { heroTitle: "Design Professionale", startBtn: "Ordina", locTitle: "Verifica", locFail: "ERRORE PAESE!", banMessage: "Bannato per posizione falsa." }),
+  pt: createTranslation(enBase, { heroTitle: "Design Profissional", startBtn: "Pedir", locTitle: "Verificação", locFail: "ERRO PAÍS!", banMessage: "Banido por localização falsa." }),
   // Central Asian Languages
-  kk: createTranslation(enBase, { heroTitle: "Кәсіби Дизайн", startBtn: "Тапсырыс беру", locTitle: "Орынды растау", locFail: "Орын қатесі!", banMessage: "Сіз бұғатталдыңыз." }),
-  ky: createTranslation(enBase, { heroTitle: "Кесиптик Дизайн", startBtn: "Буйрутма берүү", locTitle: "Жайгашкан жерди тастыктоо", locFail: "Жайгашкан жер катасы!", banMessage: "Сиз бөгөттөлдүңүз." }),
-  tg: createTranslation(enBase, { heroTitle: "Тарҳи Профессионалӣ", startBtn: "Фармоиш диҳед", locTitle: "Тасдиқи ҷойгиршавӣ", locFail: "Хатогии ҷойгиршавӣ!", banMessage: "Шумо манъ карда шудаед." }),
-  az: createTranslation(enBase, { heroTitle: "Peşəkar Dizayn", startBtn: "Sifariş ver", locTitle: "Məkan Təsdiqi", locFail: "Məkan Xətası!", banMessage: "Məkan saxtakarlığına görə qadağan edildiniz." }),
+  kk: createTranslation(enBase, { heroTitle: "Кәсіби Дизайн", startBtn: "Тапсырыс беру", locTitle: "Орынды растау", locFail: "Ел қатесі!", banMessage: "Сіз бұғатталдыңыз." }),
+  ky: createTranslation(enBase, { heroTitle: "Кесиптик Дизайн", startBtn: "Буйрутма берүү", locTitle: "Жайгашкан жерди тастыктоо", locFail: "Өлкө катасы!", banMessage: "Сиз бөгөттөлдүңүз." }),
+  tg: createTranslation(enBase, { heroTitle: "Тарҳи Профессионалӣ", startBtn: "Фармоиш диҳед", locTitle: "Тасдиқи ҷойгиршавӣ", locFail: "Хатогии кишвар!", banMessage: "Шумо манъ карда шудаед." }),
+  az: createTranslation(enBase, { heroTitle: "Peşəkar Dizayn", startBtn: "Sifariş ver", locTitle: "Məkan Təsdiqi", locFail: "Ölkə Xətası!", banMessage: "Məkan saxtakarlığına görə qadağan edildiniz." }),
   // Others fallback to EN but exist as keys
   id: enBase, vi: enBase, th: enBase, nl: enBase, pl: enBase, fa: enBase, uk: enBase
 };

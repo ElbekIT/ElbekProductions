@@ -1,3 +1,4 @@
+
 import React, { useState, useEffect } from 'react';
 import { Language, User, VerifiedLocation, CountryData } from '../types';
 import { translations } from '../utils/translations';
@@ -66,6 +67,18 @@ const LocationVerifier: React.FC<LocationVerifierProps> = ({ user, language, onV
     c.name.common.toLowerCase().includes(searchCountry.toLowerCase())
   );
 
+  // Helper for Fuzzy Matching (Removes case, spaces, special chars)
+  const normalize = (str: string) => str.toLowerCase().replace(/[^a-z0-9]/g, '');
+
+  const checkStrictMatch = (userInput: string, gpsValue: string | undefined) => {
+    if (!gpsValue) return false;
+    const normUser = normalize(userInput);
+    const normGPS = normalize(gpsValue);
+    
+    // Check if one contains the other (e.g. "Fergana" in "Fergana Region")
+    return normGPS.includes(normUser) || normUser.includes(normGPS);
+  };
+
   const handleVerify = async () => {
     if (!selectedCountry || !region || !city) {
       setError("Please fill all fields completely.");
@@ -86,10 +99,11 @@ const LocationVerifier: React.FC<LocationVerifierProps> = ({ user, language, onV
         const { latitude, longitude } = position.coords;
         
         try {
-          // AI Simulation Delay
-          await new Promise(r => setTimeout(r, 3000));
+          // AI Simulation Delay for dramatic effect
+          await new Promise(r => setTimeout(r, 2500));
 
-          // Reverse Geocoding
+          // Reverse Geocoding from OpenStreetMap (Nominatim)
+          // We need detailed address info
           const response = await fetch(`https://nominatim.openstreetmap.org/reverse?format=json&lat=${latitude}&lon=${longitude}&accept-language=en`);
           const data = await response.json();
           
@@ -98,46 +112,59 @@ const LocationVerifier: React.FC<LocationVerifierProps> = ({ user, language, onV
           }
 
           const addr = data.address;
-          const detectedCountryCode = addr.country_code?.toUpperCase(); // e.g., 'uz', 'ru'
-          
-          // Find the selected country object
+          console.log("GPS DATA:", addr);
+
+          const gpsCountryCode = addr.country_code?.toUpperCase(); // 'UZ'
+          const gpsCountry = addr.country; // 'Uzbekistan'
+          const gpsState = addr.state || addr.region || addr.province || addr.state_district; // 'Fergana Region'
+          const gpsCity = addr.city || addr.town || addr.village || addr.county || addr.district || addr.suburb; // 'Fergana'
+
+          // Find the selected country object to get valid code
           const selectedCountryObj = allCountries.find(c => c.name.common === selectedCountry);
           
-          console.log("GPS Detected Code:", detectedCountryCode);
-          console.log("Selected User Country:", selectedCountryObj?.cca2);
-
-          // Validation Logic
-          // We strictly compare the Country Code (CCA2)
-          let matches = false;
-          if (selectedCountryObj && detectedCountryCode) {
-             matches = selectedCountryObj.cca2 === detectedCountryCode;
+          // --- LEVEL 1: COUNTRY CHECK ---
+          let countryMatch = false;
+          if (selectedCountryObj && gpsCountryCode) {
+             countryMatch = selectedCountryObj.cca2 === gpsCountryCode;
+          }
+          if (!countryMatch && gpsCountry) {
+             countryMatch = normalize(gpsCountry) === normalize(selectedCountry);
           }
 
-          // Fallback check if codes mismatch but names match (fuzzy logic)
-          if (!matches && addr.country) {
-             matches = addr.country.toLowerCase().includes(selectedCountry.toLowerCase());
+          if (!countryMatch) {
+             await handleVerificationFail(`${t.locFail} DETECTED: ${gpsCountry?.toUpperCase() || gpsCountryCode}`);
+             setIsVerifying(false);
+             return;
           }
 
-          if (matches) {
-             onVerified({
-               country: selectedCountry,
-               region,
-               city,
-               lat: latitude,
-               lng: longitude
-             });
-          } else {
-             // CRITICAL FAILURE
-             const isBanned = await incrementBanStrikes(user.uid);
-             setStrikes(prev => prev + 1);
-             
-             if (isBanned) {
-                await logout();
-                onBan();
-             } else {
-                setError(`${t.locFail} DETECTED: ${addr.country?.toUpperCase() || 'UNKNOWN LOCATION'}`);
-             }
+          // --- LEVEL 2: REGION CHECK (Strict) ---
+          // e.g. User: "Farg'ona", GPS: "Fergana Region" -> Match
+          // e.g. User: "Farg'ona", GPS: "Tashkent" -> Fail
+          const regionMatch = checkStrictMatch(region, gpsState);
+          
+          if (!regionMatch) {
+             await handleVerificationFail(`${t.locFailRegion} ${gpsState?.toUpperCase() || 'UNKNOWN'}`);
+             setIsVerifying(false);
+             return;
           }
+
+          // --- LEVEL 3: CITY CHECK (Strict) ---
+          const cityMatch = checkStrictMatch(city, gpsCity);
+
+          if (!cityMatch) {
+             await handleVerificationFail(`${t.locFailCity} ${gpsCity?.toUpperCase() || 'UNKNOWN'}`);
+             setIsVerifying(false);
+             return;
+          }
+
+          // SUCCESS
+          onVerified({
+            country: selectedCountry,
+            region,
+            city,
+            lat: latitude,
+            lng: longitude
+          });
 
         } catch (err) {
           setError("Network/GPS Error. Please try again.");
@@ -151,8 +178,20 @@ const LocationVerifier: React.FC<LocationVerifierProps> = ({ user, language, onV
         setError("GPS ACCESS DENIED. YOU MUST ALLOW LOCATION TO PROCEED.");
         setIsVerifying(false);
       },
-      { enableHighAccuracy: true, timeout: 15000 }
+      { enableHighAccuracy: true, timeout: 20000 }
     );
+  };
+
+  const handleVerificationFail = async (reason: string) => {
+     const isBanned = await incrementBanStrikes(user.uid);
+     setStrikes(prev => prev + 1);
+     
+     if (isBanned) {
+        await logout();
+        onBan();
+     } else {
+        setError(reason);
+     }
   };
 
   return (
@@ -237,7 +276,7 @@ const LocationVerifier: React.FC<LocationVerifierProps> = ({ user, language, onV
                value={region}
                onChange={(e) => setRegion(e.target.value)}
                className="w-full bg-cyber-dark border border-white/10 p-4 text-white font-mono focus:border-cyber-primary outline-none cyber-input"
-               placeholder="STATE / PROVINCE"
+               placeholder="STATE / PROVINCE (e.g. Fergana)"
                disabled={isVerifying}
              />
           </div>
@@ -249,7 +288,7 @@ const LocationVerifier: React.FC<LocationVerifierProps> = ({ user, language, onV
                value={city}
                onChange={(e) => setCity(e.target.value)}
                className="w-full bg-cyber-dark border border-white/10 p-4 text-white font-mono focus:border-cyber-primary outline-none cyber-input"
-               placeholder="CITY / DISTRICT"
+               placeholder="CITY / DISTRICT (e.g. Margilan)"
                disabled={isVerifying}
              />
           </div>
