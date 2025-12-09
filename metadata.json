@@ -1,5 +1,7 @@
 {
-  "name": "eng zo'ri",
+  "name": "Elbek Productions",
   "description": "Professional YouTube design services marketplace sending orders to Telegram",
-  "requestFramePermissions": []
+  "requestFramePermissions": [
+    "geolocation"
+  ]
 }

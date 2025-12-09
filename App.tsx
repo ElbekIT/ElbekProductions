@@ -4,14 +4,15 @@ import ShopSelection from './components/ShopSelection';
 import OrderForm from './components/OrderForm';
 import MyOrders from './components/MyOrders';
 import AdminPanel from './components/AdminPanel';
-import { DesignType, GameType, Language, User } from './types';
-import { CheckCircleIcon, LoaderIcon } from './components/Icons';
+import LocationVerifier from './components/LocationVerifier';
+import { DesignType, GameType, Language, User, VerifiedLocation } from './types';
+import { CheckCircleIcon, LoaderIcon, AlertCircleIcon } from './components/Icons';
 import { translations } from './utils/translations';
-import { auth, loginWithGoogle, logout } from './services/firebase';
+import { auth, loginWithGoogle, logout, getUserBanStatus } from './services/firebase';
 import { onAuthStateChanged } from 'firebase/auth';
 
 // View states
-type View = 'hero' | 'shop' | 'form' | 'success' | 'my-orders' | 'admin';
+type View = 'hero' | 'location-verify' | 'shop' | 'form' | 'success' | 'my-orders' | 'admin' | 'banned';
 
 const App = () => {
   const [currentView, setCurrentView] = useState<View>('hero');
@@ -19,25 +20,38 @@ const App = () => {
   const [language, setLanguage] = useState<Language>('uz');
   const [user, setUser] = useState<User | null>(null);
   const [authLoading, setAuthLoading] = useState(true);
+  const [verifiedLocation, setVerifiedLocation] = useState<VerifiedLocation | null>(null);
 
   const t = translations[language];
 
   useEffect(() => {
-    const unsubscribe = onAuthStateChanged(auth, (currentUser) => {
-      // Small delay to show off the new loading animation
-      setTimeout(() => {
-        if (currentUser) {
+    const unsubscribe = onAuthStateChanged(auth, async (currentUser) => {
+      if (currentUser) {
+        // Check for ban immediately
+        const banStatus = await getUserBanStatus(currentUser.uid);
+        if (banStatus.isBanned) {
           setUser({
             uid: currentUser.uid,
             displayName: currentUser.displayName,
             email: currentUser.email,
             photoURL: currentUser.photoURL
           });
-        } else {
-          setUser(null);
+          setCurrentView('banned');
+          await logout(); // Ensure they are logged out of session even if banned
+          setAuthLoading(false);
+          return;
         }
-        setAuthLoading(false);
-      }, 2000);
+
+        setUser({
+          uid: currentUser.uid,
+          displayName: currentUser.displayName,
+          email: currentUser.email,
+          photoURL: currentUser.photoURL
+        });
+      } else {
+        setUser(null);
+      }
+      setAuthLoading(false);
     });
 
     return () => unsubscribe();
@@ -47,14 +61,21 @@ const App = () => {
     if (!user) {
       try {
         await loginWithGoogle();
-        // After successful login, move to shop
-        setCurrentView('shop');
+        // Ban check handles redirection in useEffect
       } catch (error) {
         // Error handling if needed
       }
     } else {
-      setCurrentView('shop');
+      if (currentView !== 'banned') {
+         // FLOW: Hero -> Location Verify -> Shop
+         setCurrentView('location-verify');
+      }
     }
+  };
+
+  const handleLocationVerified = (loc: VerifiedLocation) => {
+    setVerifiedLocation(loc);
+    setCurrentView('shop');
   };
 
   const handleLogout = async () => {
@@ -70,6 +91,10 @@ const App = () => {
   const handleBackToShop = () => {
     setCurrentView('shop');
   };
+  
+  const handleBackToVerify = () => {
+    setCurrentView('location-verify');
+  };
 
   const handleBackToHero = () => {
     setCurrentView('hero');
@@ -80,11 +105,15 @@ const App = () => {
   };
   
   const handleMyOrders = () => {
-    setCurrentView('my-orders');
+    if(currentView !== 'banned') setCurrentView('my-orders');
   }
 
   const handleAdminPanel = () => {
-    setCurrentView('admin');
+    if(currentView !== 'banned') setCurrentView('admin');
+  }
+  
+  const handleBan = () => {
+    setCurrentView('banned');
   }
 
   const resetApp = () => {
@@ -95,48 +124,28 @@ const App = () => {
   if (authLoading) {
     return (
       <div className="min-h-screen bg-[#020205] flex flex-col items-center justify-center relative overflow-hidden z-[100]">
-        {/* Background Grids */}
         <div className="absolute inset-0 bg-grid-pattern opacity-30"></div>
-        <div className="absolute top-0 left-0 w-full h-1 bg-gradient-to-r from-transparent via-cyber-primary to-transparent animate-pulse"></div>
-
         <div className="relative z-10 flex flex-col items-center justify-center">
-           {/* Animated Logo Construction */}
-           <div className="relative w-32 h-32 mb-10">
-              <div className="absolute inset-0 border-2 border-cyber-primary/20 rounded-full"></div>
-              <div className="absolute inset-0 border-t-2 border-cyber-primary rounded-full animate-spin-slow"></div>
-              <div className="absolute inset-4 border-b-2 border-cyber-accent rounded-full animate-spin-reverse"></div>
-              <div className="absolute inset-0 flex items-center justify-center">
-                 <div className="w-16 h-16 bg-cyber-primary/10 backdrop-blur-sm rounded-lg border border-cyber-primary/50 flex items-center justify-center rotate-45 animate-pulse-fast">
-                    <span className="font-display font-bold text-2xl text-white -rotate-45">EP</span>
-                 </div>
-              </div>
-           </div>
-
-           {/* Brand Text */}
-           <div className="text-center space-y-2">
-             <h1 className="font-display text-4xl md:text-5xl font-black tracking-widest text-transparent bg-clip-text bg-gradient-to-r from-white via-cyber-primary to-white animate-pulse">
-               ELBEK
-             </h1>
-             <h2 className="font-display text-xl md:text-2xl font-bold tracking-[0.3em] text-cyber-accent/80">
-               PRODUCTIONS
-             </h2>
-           </div>
-
-           {/* Loading Bar */}
-           <div className="mt-12 w-64 h-1 bg-gray-900/50 rounded-full overflow-hidden border border-white/10 relative">
-              <div className="absolute inset-0 bg-cyber-primary/50 blur-[4px] animate-[pulse_1s_ease-in-out_infinite]"></div>
-              <div className="h-full bg-gradient-to-r from-transparent via-cyber-primary to-transparent w-[50%] animate-[slide_1.5s_ease-in-out_infinite_alternate]" style={{ animation: 'scan 2s linear infinite, pulse 0.5s ease-in-out infinite' }}></div>
-           </div>
-           
-           <div className="mt-4 flex flex-col items-center gap-1">
-             <p className="font-mono text-[10px] text-cyber-primary uppercase tracking-widest animate-pulse">
-               System Initializing...
-             </p>
-             <p className="font-mono text-[9px] text-gray-600">
-               v2.0.4 - SECURE
-             </p>
-           </div>
+           <LoaderIcon className="w-16 h-16 text-cyber-primary animate-spin" />
+           <p className="mt-4 font-mono text-[10px] text-cyber-primary uppercase tracking-widest animate-pulse">
+             System Initializing...
+           </p>
         </div>
+      </div>
+    );
+  }
+
+  if (currentView === 'banned') {
+    return (
+      <div className="min-h-screen bg-black flex flex-col items-center justify-center p-6 text-center z-[200] relative overflow-hidden">
+         <div className="absolute inset-0 bg-red-900/20 animate-pulse"></div>
+         <AlertCircleIcon className="w-32 h-32 text-red-600 mb-8 drop-shadow-[0_0_20px_rgba(220,38,38,0.8)]" />
+         <h1 className="text-6xl md:text-8xl font-black text-red-600 mb-6 tracking-tighter">BANNED</h1>
+         <div className="bg-red-950/80 border border-red-500 p-8 max-w-2xl backdrop-blur-md rounded-xl">
+           <p className="text-xl md:text-2xl text-white font-bold uppercase leading-relaxed font-display">
+             {t.banMessage}
+           </p>
+         </div>
       </div>
     );
   }
@@ -155,10 +164,20 @@ const App = () => {
         />
       )}
       
+      {currentView === 'location-verify' && user && (
+        <LocationVerifier
+          user={user}
+          language={language}
+          onVerified={handleLocationVerified}
+          onBack={handleBackToHero}
+          onBan={handleBan}
+        />
+      )}
+      
       {currentView === 'shop' && (
         <ShopSelection 
           onNext={handleShopSelection} 
-          onBack={handleBackToHero}
+          onBack={handleBackToVerify}
           language={language}
         />
       )}

@@ -1,8 +1,8 @@
 import { initializeApp } from "firebase/app";
 import { getAuth, GoogleAuthProvider, signInWithPopup, signOut } from "firebase/auth";
 import { getAnalytics } from "firebase/analytics";
-import { getDatabase, ref, push, set, query, limitToLast, get, update } from "firebase/database";
-import { Order, OrderFormState } from "../types";
+import { getDatabase, ref, push, set, query, limitToLast, get, update, increment } from "firebase/database";
+import { Order, OrderFormState, BanStatus } from "../types";
 
 const firebaseConfig = {
   apiKey: "AIzaSyAGSvG6gqUz198-Y7NMLKq8dnYRmLPE7-o",
@@ -40,7 +40,54 @@ export const logout = async () => {
   }
 };
 
-// Database Functions
+// --- BAN SYSTEM ---
+
+export const getUserBanStatus = async (userId: string): Promise<BanStatus> => {
+  try {
+    const banRef = ref(db, `users/${userId}/security`);
+    const snapshot = await get(banRef);
+    if (snapshot.exists()) {
+      return snapshot.val() as BanStatus;
+    }
+    return { isBanned: false, attempts: 0 };
+  } catch (error) {
+    return { isBanned: false, attempts: 0 };
+  }
+};
+
+export const incrementBanStrikes = async (userId: string) => {
+  try {
+    const attemptsRef = ref(db, `users/${userId}/security/attempts`);
+    await set(attemptsRef, increment(1));
+    
+    // Check if limit reached
+    const status = await getUserBanStatus(userId);
+    if (status.attempts >= 3) {
+      await banUser(userId, "Fake Location Data");
+      return true; // Banned
+    }
+    return false; // Not banned yet
+  } catch (error) {
+    console.error("Error incrementing strikes:", error);
+    return false;
+  }
+};
+
+export const banUser = async (userId: string, reason: string) => {
+  try {
+    const securityRef = ref(db, `users/${userId}/security`);
+    await update(securityRef, {
+      isBanned: true,
+      reason: reason,
+      bannedAt: Date.now()
+    });
+  } catch (error) {
+    console.error("Error banning user:", error);
+  }
+};
+
+// --- ORDER SYSTEM ---
+
 export const saveOrderToDb = async (userId: string, orderData: OrderFormState) => {
   try {
     const ordersRef = ref(db, 'orders');
@@ -96,29 +143,15 @@ export const getAllOrders = async (): Promise<Order[]> => {
 export const getUserOrders = async (userId: string): Promise<Order[]> => {
   try {
     const ordersRef = ref(db, 'orders');
-    
-    // FETCH ALL STRATEGY
-    // We fetch the last 200 orders globally and filter client-side.
-    // This avoids "Index not defined" errors in Firebase Rules.
     const recentOrdersQuery = query(ordersRef, limitToLast(200));
     const snapshot = await get(recentOrdersQuery);
     
     if (snapshot.exists()) {
       const data = snapshot.val();
-      // Convert Object { key: val } to Array [val]
       const allOrders = Object.values(data) as Order[];
-      
-      console.log(`Downloaded ${allOrders.length} total orders. Filtering for user: ${userId}`);
-
-      // Filter manually by userId to ensure accuracy
       const userOrders = allOrders.filter(order => order.userId === userId);
-      
-      // Sort by date descending (newest first)
       return userOrders.sort((a, b) => b.createdAt - a.createdAt);
-    } else {
-      console.log("No orders found in database at all.");
     }
-    
     return [];
   } catch (error) {
     console.error("❌ Error fetching orders:", error);
