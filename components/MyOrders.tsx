@@ -30,8 +30,7 @@ const MyOrders: React.FC<MyOrdersProps> = ({ user, language, onBack }) => {
 
   const formatDate = (timestamp: number) => {
     return new Date(timestamp).toLocaleDateString(language === 'uz' ? 'uz-UZ' : 'en-US', {
-      year: 'numeric',
-      month: 'long',
+      month: 'short',
       day: 'numeric',
       hour: '2-digit',
       minute: '2-digit'
@@ -120,59 +119,54 @@ const MyOrders: React.FC<MyOrdersProps> = ({ user, language, onBack }) => {
           </button>
         </div>
       ) : (
-        <div className="space-y-8">
+        <div className="space-y-6">
           {orders.map((order) => {
             const status = getStatusConfig(order.status);
             return (
-              <div key={order.id} className={`bg-cyber-dark border border-white/10 p-5 pt-8 rounded-none relative group hover:border-opacity-50 transition-all cyber-border ${status.border} border-l-4 mt-8`}>
+              <div key={order.id} className={`bg-cyber-dark border border-white/10 p-5 rounded-lg relative group hover:border-opacity-50 transition-all cyber-border ${status.border} border-l-4`}>
                  
-                 {/* Prominent Status Badge */}
-                 <div className={`absolute -top-5 right-4 pl-4 pr-5 py-2 rounded-t-lg md:rounded-full bg-black border ${status.border} flex items-center gap-3 shadow-[0_0_15px_rgba(0,0,0,0.5)] z-10`}>
-                   {order.status !== 'completed' && (
-                     <span className="relative flex h-3 w-3">
-                        <span className={`animate-ping absolute inline-flex h-full w-full rounded-full opacity-75 ${status.bg}`}></span>
-                        <span className={`relative inline-flex rounded-full h-3 w-3 ${status.bg}`}></span>
-                     </span>
-                   )}
-                   {order.status === 'completed' && (
-                     <span className="text-green-500 font-bold text-lg">✓</span>
-                   )}
-                   <span className={`text-sm md:text-base font-black uppercase tracking-widest ${status.color}`}>
-                      {status.label}
-                   </span>
-                 </div>
-
-                 <div className="flex flex-col md:flex-row md:items-center gap-6 mt-2">
+                 <div className="flex gap-5">
                    {/* Icon */}
-                   <div className={`w-16 h-16 bg-black/50 border border-white/10 flex items-center justify-center text-3xl shrink-0 ${status.color} shadow-[0_0_20px_rgba(0,0,0,0.3)]`}>
+                   <div className={`w-14 h-14 bg-black/50 border border-white/10 flex items-center justify-center text-2xl shrink-0 ${status.color} shadow-[0_0_20px_rgba(0,0,0,0.3)] rounded`}>
                       {order.selectedDesign === 'preview' ? '🖼' : order.selectedDesign === 'banner' ? '🚩' : order.selectedDesign === 'avatar' ? '👤' : '🎨'}
                    </div>
 
-                   {/* Main Info */}
-                   <div className="flex-1 min-w-0">
-                      <div className="flex flex-col md:flex-row md:items-baseline gap-2 mb-1">
-                         <h3 className="text-2xl font-display font-bold text-white uppercase tracking-wide truncate">
+                   {/* Main Content */}
+                   <div className="flex-1 min-w-0 flex flex-col">
+                      <div className="flex flex-col sm:flex-row sm:items-baseline gap-2 mb-2">
+                         <h3 className="text-lg font-display font-bold text-white uppercase tracking-wide truncate">
                             {t.games[order.selectedGame]}
                          </h3>
-                         <span className="text-sm font-bold text-gray-400 uppercase shrink-0 bg-white/5 px-2 py-0.5 rounded border border-white/10">
+                         <span className="text-[10px] font-bold text-gray-400 uppercase shrink-0 bg-white/5 px-2 py-0.5 rounded border border-white/10 w-fit">
                             {t.designs[order.selectedDesign]}
                          </span>
                       </div>
                       
-                      <div className="grid grid-cols-1 sm:grid-cols-2 gap-x-8 gap-y-2 text-xs font-mono text-gray-500 mt-3 border-t border-white/5 pt-3">
-                         <div className="flex gap-2 items-center">
-                            <span className="opacity-50">ID RAQAMI:</span>
-                            <span className="text-white font-bold bg-white/10 px-1 rounded">#{order.id.slice(-6).toUpperCase()}</span>
-                         </div>
-                         <div className="flex gap-2">
-                            <span className="opacity-50">{t.date}:</span>
-                            <span className="text-gray-300">{formatDate(order.createdAt)}</span>
-                         </div>
-                      </div>
-                      
-                      <div className="mt-4 p-4 bg-black/40 border border-white/5 rounded-lg text-sm text-gray-300 relative">
-                         <span className="absolute -top-2 left-2 bg-cyber-dark px-2 text-[10px] text-cyber-primary font-bold uppercase tracking-widest border border-cyber-primary/20 rounded">Izoh</span>
+                      <div className="text-sm text-gray-300 italic mb-4 bg-black/20 p-2 rounded border border-white/5">
                          "{order.comment}"
+                      </div>
+
+                      {/* Footer: Date & Status */}
+                      <div className="mt-auto pt-3 border-t border-white/5 flex flex-wrap items-center gap-3 text-[10px] sm:text-xs font-mono">
+                         <span className="text-gray-600">#{order.id.slice(-4).toUpperCase()}</span>
+                         <span className="text-gray-500">|</span>
+                         <span className="text-gray-400">{formatDate(order.createdAt)}</span>
+                         
+                         {/* Status Badge moved here next to date */}
+                         <div className={`ml-auto flex items-center gap-2 px-3 py-1 rounded-full border ${status.bgLight} ${status.border} ${status.color}`}>
+                             {order.status !== 'completed' && (
+                               <span className="relative flex h-2 w-2">
+                                  <span className={`animate-ping absolute inline-flex h-full w-full rounded-full opacity-75 ${status.bg}`}></span>
+                                  <span className={`relative inline-flex rounded-full h-2 w-2 ${status.bg}`}></span>
+                               </span>
+                             )}
+                             {order.status === 'completed' && (
+                               <span className="font-bold">✓</span>
+                             )}
+                             <span className="font-bold uppercase tracking-widest">
+                                {status.label}
+                             </span>
+                         </div>
                       </div>
                    </div>
                  </div>
