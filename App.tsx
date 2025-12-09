@@ -3,6 +3,7 @@ import Hero from './components/Hero';
 import ShopSelection from './components/ShopSelection';
 import OrderForm from './components/OrderForm';
 import MyOrders from './components/MyOrders';
+import AdminPanel from './components/AdminPanel';
 import { DesignType, GameType, Language, User } from './types';
 import { CheckCircleIcon, LoaderIcon } from './components/Icons';
 import { translations } from './utils/translations';
@@ -10,7 +11,7 @@ import { auth, loginWithGoogle, logout } from './services/firebase';
 import { onAuthStateChanged } from 'firebase/auth';
 
 // View states
-type View = 'hero' | 'shop' | 'form' | 'success' | 'my-orders';
+type View = 'hero' | 'shop' | 'form' | 'success' | 'my-orders' | 'admin';
 
 const App = () => {
   const [currentView, setCurrentView] = useState<View>('hero');
@@ -82,6 +83,10 @@ const App = () => {
     setCurrentView('my-orders');
   }
 
+  const handleAdminPanel = () => {
+    setCurrentView('admin');
+  }
+
   const resetApp = () => {
     setOrderConfig(null);
     setCurrentView('hero');
@@ -142,6 +147,7 @@ const App = () => {
         <Hero 
           onStart={handleStart} 
           onMyOrders={handleMyOrders}
+          onAdmin={handleAdminPanel}
           language={language}
           setLanguage={setLanguage}
           user={user}
@@ -171,6 +177,13 @@ const App = () => {
       {currentView === 'my-orders' && user && (
         <MyOrders
           user={user}
+          language={language}
+          onBack={handleBackToHero}
+        />
+      )}
+
+      {currentView === 'admin' && (
+        <AdminPanel
           language={language}
           onBack={handleBackToHero}
         />

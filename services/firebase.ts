@@ -1,7 +1,7 @@
 import { initializeApp } from "firebase/app";
 import { getAuth, GoogleAuthProvider, signInWithPopup, signOut } from "firebase/auth";
 import { getAnalytics } from "firebase/analytics";
-import { getDatabase, ref, push, set, query, limitToLast, get } from "firebase/database";
+import { getDatabase, ref, push, set, query, limitToLast, get, update } from "firebase/database";
 import { Order, OrderFormState } from "../types";
 
 const firebaseConfig = {
@@ -60,6 +60,36 @@ export const saveOrderToDb = async (userId: string, orderData: OrderFormState) =
   } catch (error) {
     console.error("❌ Error saving order to DB:", error);
     return false;
+  }
+};
+
+export const updateOrderStatus = async (orderId: string, newStatus: Order['status']) => {
+  try {
+    const orderRef = ref(db, `orders/${orderId}`);
+    await update(orderRef, { status: newStatus });
+    console.log("✅ Order updated:", newStatus);
+    return true;
+  } catch (error) {
+    console.error("❌ Error updating order:", error);
+    return false;
+  }
+};
+
+export const getAllOrders = async (): Promise<Order[]> => {
+  try {
+    const ordersRef = ref(db, 'orders');
+    const recentOrdersQuery = query(ordersRef, limitToLast(200));
+    const snapshot = await get(recentOrdersQuery);
+    
+    if (snapshot.exists()) {
+      const data = snapshot.val();
+      const allOrders = Object.values(data) as Order[];
+      return allOrders.sort((a, b) => b.createdAt - a.createdAt);
+    }
+    return [];
+  } catch (error) {
+    console.error("❌ Error fetching all orders:", error);
+    return [];
   }
 };
 

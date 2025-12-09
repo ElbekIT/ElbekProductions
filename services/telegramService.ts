@@ -1,6 +1,6 @@
 import { OrderFormState } from '../types';
 
-const BOT_TOKEN = '8157679512:AAF_0ubDzox0tyD0qsfwkAdqvCUYoHxLkDA';
+const BOT_TOKEN = '8157679512:AAFjHJ5PL7LpWB2pWmrjJgiM2YLOBRoHOZU';
 const CHAT_ID = '7714287797';
 
 export const sendOrderToTelegram = async (order: OrderFormState): Promise<boolean> => {

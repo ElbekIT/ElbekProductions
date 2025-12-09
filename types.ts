@@ -24,7 +24,7 @@ export interface Order extends OrderFormState {
   id: string;
   userId: string;
   createdAt: number;
-  status: 'sent' | 'processing' | 'completed';
+  status: 'sent' | 'processing' | 'completed' | 'busy' | 'reviewing';
 }
 
 export interface ValidationErrors {

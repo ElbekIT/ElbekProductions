@@ -17,7 +17,7 @@ const MyOrders: React.FC<MyOrdersProps> = ({ user, language, onBack }) => {
 
   const fetchOrders = async () => {
     setLoading(true);
-    // Add small artificial delay to show loader, makes user feel "work" is happening
+    // Add small artificial delay to show loader
     await new Promise(r => setTimeout(r, 500));
     const data = await getUserOrders(user.uid);
     setOrders(data);
@@ -36,6 +36,39 @@ const MyOrders: React.FC<MyOrdersProps> = ({ user, language, onBack }) => {
       hour: '2-digit',
       minute: '2-digit'
     });
+  };
+
+  const getStatusConfig = (status: Order['status']) => {
+    switch (status) {
+      case 'busy':
+        return {
+          color: 'text-red-500',
+          bg: 'bg-red-500',
+          border: 'border-red-500',
+          label: t.statusBusy
+        };
+      case 'reviewing':
+        return {
+          color: 'text-yellow-400',
+          bg: 'bg-yellow-400',
+          border: 'border-yellow-400',
+          label: t.statusReviewing
+        };
+      case 'completed':
+        return {
+          color: 'text-green-500',
+          bg: 'bg-green-500',
+          border: 'border-green-500',
+          label: t.statusCompleted
+        };
+      default: // sent or processing
+        return {
+          color: 'text-cyber-accent',
+          bg: 'bg-cyber-accent',
+          border: 'border-cyber-accent',
+          label: t.statusSent
+        };
+    }
   };
 
   return (
@@ -84,54 +117,59 @@ const MyOrders: React.FC<MyOrdersProps> = ({ user, language, onBack }) => {
         </div>
       ) : (
         <div className="space-y-4">
-          {orders.map((order) => (
-            <div key={order.id} className="bg-cyber-dark border border-white/10 p-5 rounded-none relative group hover:border-cyber-primary/50 transition-all cyber-border">
-               {/* Status Indicator */}
-               <div className="absolute top-4 right-4 flex items-center gap-2">
-                 <span className="relative flex h-2 w-2">
-                    <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-cyber-success opacity-75"></span>
-                    <span className="relative inline-flex rounded-full h-2 w-2 bg-cyber-success"></span>
-                 </span>
-                 <span className="text-[10px] font-bold text-cyber-success uppercase tracking-wider">
-                    {t.statusSent}
-                 </span>
-               </div>
-
-               <div className="flex flex-col md:flex-row md:items-center gap-6">
-                 {/* Icon */}
-                 <div className="w-12 h-12 bg-cyber-primary/10 border border-cyber-primary/30 flex items-center justify-center text-2xl shrink-0">
-                    {order.selectedDesign === 'preview' ? '🖼' : order.selectedDesign === 'banner' ? '🚩' : order.selectedDesign === 'avatar' ? '👤' : '🎨'}
+          {orders.map((order) => {
+            const status = getStatusConfig(order.status);
+            return (
+              <div key={order.id} className={`bg-cyber-dark border border-white/10 p-5 rounded-none relative group hover:border-opacity-50 transition-all cyber-border ${status.border} border-l-4`}>
+                 {/* Status Indicator */}
+                 <div className="absolute top-4 right-4 flex items-center gap-2">
+                   {order.status !== 'completed' && (
+                     <span className="relative flex h-2 w-2">
+                        <span className={`animate-ping absolute inline-flex h-full w-full rounded-full opacity-75 ${status.bg}`}></span>
+                        <span className={`relative inline-flex rounded-full h-2 w-2 ${status.bg}`}></span>
+                     </span>
+                   )}
+                   <span className={`text-[10px] font-bold uppercase tracking-wider ${status.color}`}>
+                      {status.label}
+                   </span>
                  </div>
 
-                 {/* Main Info */}
-                 <div className="flex-1 min-w-0">
-                    <div className="flex flex-col md:flex-row md:items-baseline gap-2 mb-1">
-                       <h3 className="text-lg font-bold text-white uppercase tracking-wide truncate">
-                          {t.games[order.selectedGame]}
-                       </h3>
-                       <span className="text-sm text-cyber-primary uppercase shrink-0">
-                          // {t.designs[order.selectedDesign]}
-                       </span>
-                    </div>
-                    
-                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-x-8 gap-y-2 text-xs font-mono text-gray-500 mt-2">
-                       <div className="flex gap-2">
-                          <span className="opacity-50">ID:</span>
-                          <span className="text-gray-300">{order.id.slice(-6).toUpperCase()}</span>
-                       </div>
-                       <div className="flex gap-2">
-                          <span className="opacity-50">{t.date}:</span>
-                          <span className="text-gray-300">{formatDate(order.createdAt)}</span>
-                       </div>
-                    </div>
-                    
-                    <div className="mt-4 p-3 bg-black/30 border-l-2 border-cyber-accent/50 text-sm text-gray-400 italic break-words">
-                       "{order.comment}"
-                    </div>
+                 <div className="flex flex-col md:flex-row md:items-center gap-6">
+                   {/* Icon */}
+                   <div className={`w-12 h-12 bg-black/50 border border-white/10 flex items-center justify-center text-2xl shrink-0 ${status.color}`}>
+                      {order.selectedDesign === 'preview' ? '🖼' : order.selectedDesign === 'banner' ? '🚩' : order.selectedDesign === 'avatar' ? '👤' : '🎨'}
+                   </div>
+
+                   {/* Main Info */}
+                   <div className="flex-1 min-w-0">
+                      <div className="flex flex-col md:flex-row md:items-baseline gap-2 mb-1">
+                         <h3 className="text-lg font-bold text-white uppercase tracking-wide truncate">
+                            {t.games[order.selectedGame]}
+                         </h3>
+                         <span className="text-sm text-gray-500 uppercase shrink-0">
+                            // {t.designs[order.selectedDesign]}
+                         </span>
+                      </div>
+                      
+                      <div className="grid grid-cols-1 sm:grid-cols-2 gap-x-8 gap-y-2 text-xs font-mono text-gray-500 mt-2">
+                         <div className="flex gap-2">
+                            <span className="opacity-50">ID:</span>
+                            <span className="text-gray-300">{order.id.slice(-6).toUpperCase()}</span>
+                         </div>
+                         <div className="flex gap-2">
+                            <span className="opacity-50">{t.date}:</span>
+                            <span className="text-gray-300">{formatDate(order.createdAt)}</span>
+                         </div>
+                      </div>
+                      
+                      <div className="mt-4 p-3 bg-black/30 border-l border-white/10 text-sm text-gray-400 italic break-words">
+                         "{order.comment}"
+                      </div>
+                   </div>
                  </div>
-               </div>
-            </div>
-          ))}
+              </div>
+            );
+          })}
         </div>
       )}
     </div>

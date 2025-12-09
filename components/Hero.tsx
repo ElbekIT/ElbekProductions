@@ -6,14 +6,18 @@ import { translations } from '../utils/translations';
 interface HeroProps {
   onStart: () => void;
   onMyOrders: () => void;
+  onAdmin?: () => void;
   language: Language;
   setLanguage: (lang: Language) => void;
   user: User | null;
   onLogout: () => void;
 }
 
-const Hero: React.FC<HeroProps> = ({ onStart, onMyOrders, language, setLanguage, user, onLogout }) => {
+const ADMIN_EMAIL = 'qoriyevagavharoy@gmail.com';
+
+const Hero: React.FC<HeroProps> = ({ onStart, onMyOrders, onAdmin, language, setLanguage, user, onLogout }) => {
   const t = translations[language];
+  const isAdmin = user?.email === ADMIN_EMAIL;
 
   return (
     <div className="min-h-screen flex flex-col relative overflow-hidden">
@@ -27,9 +31,16 @@ const Hero: React.FC<HeroProps> = ({ onStart, onMyOrders, language, setLanguage,
         <div className="flex items-center gap-4">
           {user && (
              <div className="flex items-center gap-4">
+                 {isAdmin && onAdmin && (
+                   <button onClick={onAdmin} className="hidden md:block text-[10px] font-bold uppercase tracking-widest text-red-500 hover:text-white transition-colors border border-red-500/30 px-3 py-1 rounded hover:bg-red-500">
+                      {t.adminPanelBtn}
+                   </button>
+                 )}
+                 
                  <button onClick={onMyOrders} className="hidden md:block text-[10px] font-bold uppercase tracking-widest text-cyber-primary hover:text-white transition-colors border border-cyber-primary/30 px-3 py-1 rounded hover:bg-cyber-primary/10">
                     {t.myOrdersBtn}
                  </button>
+                 
                  <div className="hidden md:flex items-center gap-2 border border-white/10 bg-black/50 px-3 py-1 rounded-full">
                    {user.photoURL && (
                      <img src={user.photoURL} alt="User" className="w-6 h-6 rounded-full border border-cyber-primary" />
@@ -103,6 +114,12 @@ const Hero: React.FC<HeroProps> = ({ onStart, onMyOrders, language, setLanguage,
               {user && (
                  <button onClick={onMyOrders} className="md:hidden w-16 bg-cyber-dark border border-white/10 flex items-center justify-center cyber-input hover:border-cyber-primary transition-colors">
                     <span className="text-xl">📂</span>
+                 </button>
+              )}
+
+              {isAdmin && onAdmin && (
+                 <button onClick={onAdmin} className="md:hidden w-16 bg-red-900/20 border border-red-500/30 flex items-center justify-center cyber-input hover:bg-red-500 transition-colors">
+                    <span className="text-xl">⚙️</span>
                  </button>
               )}
           </div>
