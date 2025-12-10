@@ -1,4 +1,5 @@
 
+
 import { Language } from '../types';
 
 // Helper to reduce file size: default to English if missing
@@ -35,6 +36,18 @@ const enBase = {
   statusBusy: "Busy",
   statusReviewing: "Reviewing",
   statusCompleted: "Completed",
+  
+  // Admin
+  adminTabOrders: "ORDERS",
+  adminTabUsers: "ALL USERS",
+  adminTabBanned: "BANNED LIST",
+  adminColUser: "User Info",
+  adminColLogin: "Last Login",
+  adminColAction: "Actions",
+  adminColReason: "Ban Reason",
+  adminBtnBan: "BAN USER",
+  adminBtnUnban: "UNBAN",
+  adminBanPlaceholder: "Reason for ban...",
   
   // Location
   locTitle: "Global Verification",
@@ -82,7 +95,17 @@ export const translations: Record<Language, typeof enBase> = {
     locFailCity: "SHAHAR XATOLIGI! GPS ANIQLAGAN JOY:",
     locWarning: "DIQQAT! 3 marta noto'g'ri joylashuv kiritilsa, tizim sizni bloklaydi!",
     banMessage: "SIZ BIZNI ALDAB BOSHQA DAVLATNI TANLAB LOCATSIYAGA TO'GRI MOS KELMAGANLIGI SABAB BIZNI ALDAGANINGIZ UCHUN BAN QILINDINGIZ.",
-    statusBusy: "Band", statusReviewing: "Ko'rilmoqda", statusCompleted: "Tayyor", statusSent: "Yuborildi"
+    statusBusy: "Band", statusReviewing: "Ko'rilmoqda", statusCompleted: "Tayyor", statusSent: "Yuborildi",
+    adminTabOrders: "BUYURTMALAR",
+    adminTabUsers: "FOYDALANUVCHILAR",
+    adminTabBanned: "BAN QILINGANLAR",
+    adminColUser: "Foydalanuvchi",
+    adminColLogin: "Kirgan vaqti",
+    adminColAction: "Boshqaruv",
+    adminColReason: "Ban Sababi",
+    adminBtnBan: "BAN QILISH",
+    adminBtnUnban: "BANDAN OCHISH",
+    adminBanPlaceholder: "Ban sababini yozing...",
   }),
   ru: createTranslation(enBase, {
     heroTitle: "Профессиональный YouTube Дизайн",
@@ -109,7 +132,17 @@ export const translations: Record<Language, typeof enBase> = {
     locFailCity: "ОШИБКА ГОРОДА! GPS:",
     locWarning: "ВНИМАНИЕ! После 3 ошибок вы будете заблокированы!",
     banMessage: "ВЫ ЗАБЛОКИРОВАНЫ ЗА ПОПЫТКУ ОБМАНА СИСТЕМЫ И УКАЗАНИЕ ЛОЖНОЙ ЛОКАЦИИ.",
-    statusBusy: "Занят", statusReviewing: "На проверке", statusCompleted: "Готово", statusSent: "Отправлено"
+    statusBusy: "Занят", statusReviewing: "На проверке", statusCompleted: "Готово", statusSent: "Отправлено",
+    adminTabOrders: "ЗАКАЗЫ",
+    adminTabUsers: "ПОЛЬЗОВАТЕЛИ",
+    adminTabBanned: "ЧЕРНЫЙ СПИСОК",
+    adminColUser: "Пользователь",
+    adminColLogin: "Вход",
+    adminColAction: "Действия",
+    adminColReason: "Причина Бана",
+    adminBtnBan: "ЗАБАНИТЬ",
+    adminBtnUnban: "РАЗБАНИТЬ",
+    adminBanPlaceholder: "Причина бана...",
   }),
   // Adding core supported languages
   tr: createTranslation(enBase, { heroTitle: "Profesyonel Tasarım", startBtn: "Sipariş Ver", locTitle: "Konum Doğrulama", locFail: "ÜLKE HATASI!", locFailRegion: "BÖLGE HATASI!", locFailCity: "ŞEHİR HATASI!", banMessage: "Konum sahtekarlığı nedeniyle yasaklandınız." }),

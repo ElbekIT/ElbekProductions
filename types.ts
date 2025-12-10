@@ -1,3 +1,4 @@
+
 export type DesignType = 'preview' | 'banner' | 'avatar' | 'logo';
 export type GameType = 'pubg' | 'minecraft' | 'csgo' | 'vlog' | 'gta' | 'valorant' | 'freefire' | 'roblox' | 'fifa' | 'cod' | 'dota' | 'standoff' | 'other';
 
@@ -38,6 +39,19 @@ export interface BanStatus {
   isBanned: boolean;
   reason?: string;
   attempts: number;
+  bannedAt?: number;
+}
+
+// User data stored in DB for Admin to see
+export interface FullUserData {
+  uid: string;
+  profile: {
+    displayName: string;
+    email: string;
+    photoURL: string;
+    lastLogin: number;
+  };
+  security?: BanStatus;
 }
 
 export interface Order extends OrderFormState {

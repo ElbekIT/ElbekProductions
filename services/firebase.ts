@@ -1,8 +1,9 @@
+
 import { initializeApp } from "firebase/app";
 import { getAuth, GoogleAuthProvider, signInWithPopup, signOut } from "firebase/auth";
 import { getAnalytics } from "firebase/analytics";
-import { getDatabase, ref, push, set, query, limitToLast, get, update, increment } from "firebase/database";
-import { Order, OrderFormState, BanStatus } from "../types";
+import { getDatabase, ref, push, set, query, limitToLast, get, update, increment, remove } from "firebase/database";
+import { Order, OrderFormState, BanStatus, User, FullUserData } from "../types";
 
 const firebaseConfig = {
   apiKey: "AIzaSyAGSvG6gqUz198-Y7NMLKq8dnYRmLPE7-o",
@@ -37,6 +38,23 @@ export const logout = async () => {
     await signOut(auth);
   } catch (error) {
     console.error("Logout failed:", error);
+  }
+};
+
+// --- USER SYNC ---
+// Call this on every login to ensure user is in DB list
+export const syncUserProfile = async (user: User) => {
+  if (!user.uid) return;
+  try {
+    const userRef = ref(db, `users/${user.uid}/profile`);
+    await update(userRef, {
+      displayName: user.displayName || 'Unknown',
+      email: user.email || 'No Email',
+      photoURL: user.photoURL || '',
+      lastLogin: Date.now()
+    });
+  } catch (e) {
+    console.error("Failed to sync user profile", e);
   }
 };
 
@@ -81,8 +99,53 @@ export const banUser = async (userId: string, reason: string) => {
       reason: reason,
       bannedAt: Date.now()
     });
+    console.log(`🚫 BANNED USER: ${userId}`);
+    return true;
   } catch (error) {
     console.error("Error banning user:", error);
+    return false;
+  }
+};
+
+export const unbanUser = async (userId: string) => {
+  try {
+    const securityRef = ref(db, `users/${userId}/security`);
+    // Reset security status
+    await set(securityRef, {
+      isBanned: false,
+      attempts: 0,
+      reason: null,
+      bannedAt: null
+    });
+    console.log(`✅ UNBANNED USER: ${userId}`);
+    return true;
+  } catch (error) {
+    console.error("Error unbanning user:", error);
+    return false;
+  }
+};
+
+// --- ADMIN FEATURES ---
+
+export const getAllUsersFromDb = async (): Promise<FullUserData[]> => {
+  try {
+    const usersRef = ref(db, 'users');
+    const snapshot = await get(usersRef);
+    
+    if (snapshot.exists()) {
+      const data = snapshot.val();
+      // data is object { uid1: { profile: {...}, security: {...} }, uid2: ... }
+      const usersArray: FullUserData[] = Object.entries(data).map(([uid, val]: [string, any]) => ({
+        uid,
+        profile: val.profile || { displayName: 'Unknown', email: 'Unknown', photoURL: '', lastLogin: 0 },
+        security: val.security || { isBanned: false, attempts: 0 }
+      }));
+      return usersArray.sort((a, b) => (b.profile.lastLogin || 0) - (a.profile.lastLogin || 0));
+    }
+    return [];
+  } catch (error) {
+    console.error("Error fetching all users:", error);
+    return [];
   }
 };
 

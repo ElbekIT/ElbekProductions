@@ -1,3 +1,4 @@
+
 import React, { useState, useEffect } from 'react';
 import Hero from './components/Hero';
 import ShopSelection from './components/ShopSelection';
@@ -9,7 +10,7 @@ import IntroLoader from './components/IntroLoader';
 import { DesignType, GameType, Language, User, VerifiedLocation } from './types';
 import { CheckCircleIcon, LoaderIcon, AlertCircleIcon } from './components/Icons';
 import { translations } from './utils/translations';
-import { auth, loginWithGoogle, logout, getUserBanStatus } from './services/firebase';
+import { auth, loginWithGoogle, logout, getUserBanStatus, syncUserProfile } from './services/firebase';
 import { onAuthStateChanged } from 'firebase/auth';
 
 // View states
@@ -29,6 +30,14 @@ const App = () => {
   useEffect(() => {
     const unsubscribe = onAuthStateChanged(auth, async (currentUser) => {
       if (currentUser) {
+        // Sync basic profile to DB for Admin
+        await syncUserProfile({
+           uid: currentUser.uid,
+           displayName: currentUser.displayName,
+           email: currentUser.email,
+           photoURL: currentUser.photoURL
+        });
+
         // Check for ban immediately
         const banStatus = await getUserBanStatus(currentUser.uid);
         if (banStatus.isBanned) {
