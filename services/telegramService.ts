@@ -1,3 +1,4 @@
+
 import { OrderFormState } from '../types';
 
 const BOT_TOKEN = '8157679512:AAF_0ubDzox0tyD0qsfwkAdqvCUYoHxLkDA';
@@ -61,5 +62,42 @@ export const sendOrderToTelegram = async (order: OrderFormState): Promise<boolea
   } catch (error) {
     console.error('Telegram send error:', error);
     return false;
+  }
+};
+
+// NEW: Send OTP Verification Code
+export const sendVerificationCodeToTelegram = async (userTelegramId: string, code: string): Promise<{ success: boolean; error?: string }> => {
+  const message = `
+<b>🔐 ELBEK PRODUCTIONS TASDIQLASH</b>
+➖➖➖➖➖➖➖➖
+Sizning tasdiqlash kodingiz:
+<code>${code}</code>
+
+⚠️ Bu kodni hech kimga bermang.
+`;
+
+  try {
+    const response = await fetch(`https://api.telegram.org/bot${BOT_TOKEN}/sendMessage`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        chat_id: userTelegramId,
+        text: message,
+        parse_mode: 'HTML',
+      }),
+    });
+
+    const data = await response.json();
+    
+    if (!data.ok) {
+        if (data.description?.includes('chat not found')) {
+            return { success: false, error: 'bot_not_started' };
+        }
+        return { success: false, error: data.description };
+    }
+    
+    return { success: true };
+  } catch (error) {
+    return { success: false, error: 'network_error' };
   }
 };

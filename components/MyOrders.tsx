@@ -1,8 +1,9 @@
+
 import React, { useEffect, useState } from 'react';
 import { Language, Order, User } from '../types';
 import { translations } from '../utils/translations';
 import { getUserOrders } from '../services/firebase';
-import { LoaderIcon } from './Icons';
+import { LoaderIcon, CheckCircleIcon } from './Icons';
 
 interface MyOrdersProps {
   user: User;
@@ -14,6 +15,7 @@ const MyOrders: React.FC<MyOrdersProps> = ({ user, language, onBack }) => {
   const t = translations[language];
   const [orders, setOrders] = useState<Order[]>([]);
   const [loading, setLoading] = useState(true);
+  const [activeTab, setActiveTab] = useState<'result' | 'history'>('result');
 
   const fetchOrders = async () => {
     setLoading(true);
@@ -74,106 +76,140 @@ const MyOrders: React.FC<MyOrdersProps> = ({ user, language, onBack }) => {
     }
   };
 
+  // Find the latest completed order with an image
+  const latestResult = orders.find(o => o.status === 'completed' && o.resultImage);
+
   return (
     <div className="min-h-screen pt-6 pb-24 px-4 flex flex-col max-w-4xl mx-auto">
       {/* Header */}
-      <div className="flex justify-between items-center mb-8">
+      <div className="flex justify-between items-center mb-6">
         <button onClick={onBack} className="text-gray-400 hover:text-white font-mono uppercase text-xs tracking-widest flex items-center gap-2">
           <span>&lt;</span> {t.back}
         </button>
         
-        <div className="flex items-center gap-4">
-             <button 
-                onClick={fetchOrders}
-                className="text-cyber-primary hover:text-white text-xs uppercase tracking-widest border border-cyber-primary/30 px-3 py-1 rounded hover:bg-cyber-primary/20 transition-colors flex items-center gap-2 active:scale-95"
-             >
-                <span className={loading ? "animate-spin" : ""}>↻</span> {language === 'uz' ? 'Yangilash' : 'Refresh'}
-             </button>
-             <h2 className="text-xl md:text-2xl font-display font-bold text-white uppercase tracking-wider hidden md:block">
-                {t.myOrdersBtn}
-             </h2>
-        </div>
+        <button 
+           onClick={fetchOrders}
+           className="text-cyber-primary hover:text-white text-xs uppercase tracking-widest border border-cyber-primary/30 px-3 py-1 rounded hover:bg-cyber-primary/20 transition-colors flex items-center gap-2 active:scale-95"
+        >
+           <span className={loading ? "animate-spin" : ""}>↻</span> {language === 'uz' ? 'Yangilash' : 'Refresh'}
+        </button>
       </div>
 
-      <h2 className="text-xl font-display font-bold text-white uppercase tracking-wider md:hidden mb-6">
-           {t.myOrdersBtn}
-      </h2>
+      {/* Tabs */}
+      <div className="flex mb-8 bg-black/40 border border-white/10 rounded-lg p-1 cyber-border">
+          <button 
+             onClick={() => setActiveTab('result')}
+             className={`flex-1 py-3 text-xs md:text-sm font-bold uppercase tracking-widest rounded-md transition-all ${activeTab === 'result' ? 'bg-cyber-primary text-white shadow-lg' : 'text-gray-500 hover:text-white hover:bg-white/5'}`}
+          >
+             {t.tabMyResult}
+          </button>
+          <button 
+             onClick={() => setActiveTab('history')}
+             className={`flex-1 py-3 text-xs md:text-sm font-bold uppercase tracking-widest rounded-md transition-all ${activeTab === 'history' ? 'bg-cyber-primary text-white shadow-lg' : 'text-gray-500 hover:text-white hover:bg-white/5'}`}
+          >
+             {t.tabHistory}
+          </button>
+      </div>
 
       {loading ? (
         <div className="flex-1 flex flex-col items-center justify-center min-h-[50vh]">
           <LoaderIcon className="w-10 h-10 text-cyber-primary" />
           <p className="mt-4 text-xs font-mono text-gray-500 animate-pulse">DATABASE SYNC...</p>
         </div>
-      ) : orders.length === 0 ? (
-        <div className="flex-1 flex flex-col items-center justify-center min-h-[50vh] border border-white/5 bg-white/[0.02] rounded-lg p-10">
-          <div className="text-6xl mb-4 opacity-20">📂</div>
-          <p className="text-gray-500 font-mono uppercase tracking-widest text-center">{t.noOrders}</p>
-          <p className="text-xs text-gray-700 mt-2 text-center max-w-xs">
-            Agar hozir buyurtma bergan bo'lsangiz, "Yangilash" tugmasini bosing.
-          </p>
-          <button 
-             onClick={fetchOrders}
-             className="mt-6 px-6 py-2 bg-cyber-dark border border-cyber-primary/30 text-cyber-primary hover:bg-cyber-primary hover:text-white transition-all text-xs uppercase tracking-widest"
-          >
-             Yangilash
-          </button>
-        </div>
       ) : (
-        <div className="space-y-6">
-          {orders.map((order) => {
-            const status = getStatusConfig(order.status);
-            return (
-              <div key={order.id} className={`bg-cyber-dark border border-white/10 p-5 rounded-lg relative group hover:border-opacity-50 transition-all cyber-border ${status.border} border-l-4`}>
-                 
-                 <div className="flex gap-5">
-                   {/* Icon */}
-                   <div className={`w-14 h-14 bg-black/50 border border-white/10 flex items-center justify-center text-2xl shrink-0 ${status.color} shadow-[0_0_20px_rgba(0,0,0,0.3)] rounded`}>
-                      {order.selectedDesign === 'preview' ? '🖼' : order.selectedDesign === 'banner' ? '🚩' : order.selectedDesign === 'avatar' ? '👤' : '🎨'}
-                   </div>
+        <>
+          {/* TAB: RESULT */}
+          {activeTab === 'result' && (
+             <div className="flex flex-col items-center">
+                {latestResult ? (
+                   <div className="w-full max-w-2xl animate-fade-in-up">
+                      <div className="bg-gradient-to-b from-green-500/10 to-transparent p-1 rounded-2xl cyber-border border border-green-500/30">
+                         <div className="bg-black/80 backdrop-blur rounded-xl p-6 relative overflow-hidden">
+                            <div className="flex items-center gap-3 mb-6">
+                               <CheckCircleIcon className="w-6 h-6 text-green-500" />
+                               <h2 className="text-xl md:text-2xl font-display font-black text-white uppercase tracking-wider">{t.resultTitle}</h2>
+                            </div>
 
-                   {/* Main Content */}
-                   <div className="flex-1 min-w-0 flex flex-col">
-                      <div className="flex flex-col sm:flex-row sm:items-baseline gap-2 mb-2">
-                         <h3 className="text-lg font-display font-bold text-white uppercase tracking-wide truncate">
-                            {t.games[order.selectedGame]}
-                         </h3>
-                         <span className="text-[10px] font-bold text-gray-400 uppercase shrink-0 bg-white/5 px-2 py-0.5 rounded border border-white/10 w-fit">
-                            {t.designs[order.selectedDesign]}
-                         </span>
-                      </div>
-                      
-                      <div className="text-sm text-gray-300 italic mb-4 bg-black/20 p-2 rounded border border-white/5">
-                         "{order.comment}"
-                      </div>
+                            {/* Image Container */}
+                            <div className="relative group mb-6 rounded-lg overflow-hidden border border-white/10">
+                               <img 
+                                 src={latestResult.resultImage} 
+                                 alt="Final Result" 
+                                 className="w-full h-auto object-cover max-h-[500px]" 
+                               />
+                               {/* Download Overlay */}
+                               <div className="absolute inset-0 bg-black/50 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center">
+                                  <a 
+                                    href={latestResult.resultImage} 
+                                    target="_blank" 
+                                    rel="noreferrer"
+                                    className="px-6 py-3 bg-white text-black font-bold uppercase tracking-widest hover:bg-cyber-primary hover:text-white transition-colors"
+                                  >
+                                    {t.downloadBtn}
+                                  </a>
+                               </div>
+                            </div>
 
-                      {/* Footer: Date & Status */}
-                      <div className="mt-auto pt-3 border-t border-white/5 flex flex-wrap items-center gap-3 text-[10px] sm:text-xs font-mono">
-                         <span className="text-gray-600">#{order.id.slice(-4).toUpperCase()}</span>
-                         <span className="text-gray-500">|</span>
-                         <span className="text-gray-400">{formatDate(order.createdAt)}</span>
-                         
-                         {/* Status Badge moved here next to date */}
-                         <div className={`ml-auto flex items-center gap-2 px-3 py-1 rounded-full border ${status.bgLight} ${status.border} ${status.color}`}>
-                             {order.status !== 'completed' && (
-                               <span className="relative flex h-2 w-2">
-                                  <span className={`animate-ping absolute inline-flex h-full w-full rounded-full opacity-75 ${status.bg}`}></span>
-                                  <span className={`relative inline-flex rounded-full h-2 w-2 ${status.bg}`}></span>
-                               </span>
-                             )}
-                             {order.status === 'completed' && (
-                               <span className="font-bold">✓</span>
-                             )}
-                             <span className="font-bold uppercase tracking-widest">
-                                {status.label}
-                             </span>
+                            {/* Description */}
+                            <div className="bg-white/5 p-4 rounded border-l-2 border-cyber-primary">
+                               <p className="text-[10px] text-cyber-primary uppercase font-bold mb-1">{t.resultDesc}</p>
+                               <p className="text-gray-300 italic text-sm">"{latestResult.resultDescription}"</p>
+                            </div>
+                            
+                            <div className="mt-4 text-[10px] text-gray-600 font-mono text-center uppercase">
+                               ID: #{latestResult.id.slice(-6)} • {t.games[latestResult.selectedGame]} • {t.designs[latestResult.selectedDesign]}
+                            </div>
                          </div>
                       </div>
                    </div>
-                 </div>
-              </div>
-            );
-          })}
-        </div>
+                ) : (
+                   <div className="flex flex-col items-center justify-center py-20 opacity-50">
+                      <div className="w-20 h-20 border-2 border-dashed border-gray-600 rounded-xl flex items-center justify-center mb-4">
+                         <span className="text-4xl">🖼</span>
+                      </div>
+                      <p className="text-gray-400 font-mono uppercase tracking-widest text-center max-w-xs">
+                         {language === 'uz' ? 'Hozircha tayyor natija yo\'q. Iltimos kuting.' : 'No finished results yet. Please wait.'}
+                      </p>
+                   </div>
+                )}
+             </div>
+          )}
+
+          {/* TAB: HISTORY */}
+          {activeTab === 'history' && (
+             <div className="space-y-4 animate-fade-in">
+                {orders.length === 0 ? (
+                    <div className="p-10 text-center text-gray-500 font-mono border border-white/5 rounded-lg bg-white/[0.02]">
+                       {t.noOrders}
+                    </div>
+                ) : (
+                    orders.map((order) => {
+                       const status = getStatusConfig(order.status);
+                       return (
+                         <div key={order.id} className={`bg-cyber-dark border border-white/10 p-4 rounded-lg relative hover:border-white/30 transition-all ${status.border} border-l-4`}>
+                            <div className="flex justify-between items-start mb-2">
+                               <div className="flex items-center gap-2">
+                                  <span className="text-xl">{order.selectedDesign === 'preview' ? '🖼' : order.selectedDesign === 'banner' ? '🚩' : order.selectedDesign === 'avatar' ? '👤' : '🎨'}</span>
+                                  <div>
+                                     <h3 className="text-sm font-bold text-white uppercase">{t.games[order.selectedGame]}</h3>
+                                     <div className="text-[10px] text-gray-500 uppercase">{t.designs[order.selectedDesign]}</div>
+                                  </div>
+                               </div>
+                               <div className={`px-2 py-0.5 rounded text-[10px] font-bold uppercase ${status.bgLight} ${status.color}`}>
+                                  {status.label}
+                               </div>
+                            </div>
+                            <div className="text-xs text-gray-400 font-mono flex justify-between mt-3 pt-2 border-t border-white/5">
+                               <span>{formatDate(order.createdAt)}</span>
+                               <span>#{order.id.slice(-4).toUpperCase()}</span>
+                            </div>
+                         </div>
+                       );
+                    })
+                )}
+             </div>
+          )}
+        </>
       )}
     </div>
   );

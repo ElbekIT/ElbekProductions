@@ -2,7 +2,7 @@
 import React, { useEffect, useState } from 'react';
 import { Language, Order, FullUserData } from '../types';
 import { translations } from '../utils/translations';
-import { getAllOrders, updateOrderStatus, getAllUsersFromDb, banUser, unbanUser } from '../services/firebase';
+import { getAllOrders, updateOrderStatus, getAllUsersFromDb, banUser, unbanUser, deliverOrderResult } from '../services/firebase';
 import { LoaderIcon, AlertCircleIcon, CheckCircleIcon } from './Icons';
 
 interface AdminPanelProps {
@@ -27,6 +27,11 @@ const AdminPanel: React.FC<AdminPanelProps> = ({ language, onBack }) => {
   const [banReason, setBanReason] = useState('');
   const [selectedUserForBan, setSelectedUserForBan] = useState<string | null>(null);
 
+  // Delivery Input State
+  const [deliveryOrderId, setDeliveryOrderId] = useState<string | null>(null);
+  const [resultImgUrl, setResultImgUrl] = useState('');
+  const [resultDesc, setResultDesc] = useState('');
+
   const fetchAllData = async () => {
     setLoading(true);
     const [ordersData, usersData] = await Promise.all([
@@ -48,6 +53,26 @@ const AdminPanel: React.FC<AdminPanelProps> = ({ language, onBack }) => {
     setOrders(prev => prev.map(o => o.id === orderId ? { ...o, status: newStatus } : o));
     setActionLoading(null);
   };
+
+  const handleDeliver = async () => {
+    if (!deliveryOrderId || !resultImgUrl) return;
+    
+    setActionLoading(deliveryOrderId);
+    const success = await deliverOrderResult(deliveryOrderId, resultImgUrl, resultDesc);
+    
+    if (success) {
+      setOrders(prev => prev.map(o => o.id === deliveryOrderId ? { 
+        ...o, 
+        status: 'completed', 
+        resultImage: resultImgUrl, 
+        resultDescription: resultDesc 
+      } : o));
+      setDeliveryOrderId(null);
+      setResultImgUrl('');
+      setResultDesc('');
+    }
+    setActionLoading(null);
+  }
 
   const handleBanUser = async (userId: string) => {
     if (!banReason.trim()) return;
@@ -141,7 +166,51 @@ const AdminPanel: React.FC<AdminPanelProps> = ({ language, onBack }) => {
                     <div className="p-10 text-center text-gray-500 font-mono">NO DATA</div>
                 ) : (
                     orders.map((order) => (
-                        <div key={order.id} className="grid grid-cols-12 gap-2 items-center p-4 border-b border-white/5 hover:bg-white/[0.02] transition-colors">
+                        <div key={order.id} className="grid grid-cols-12 gap-2 items-center p-4 border-b border-white/5 hover:bg-white/[0.02] transition-colors relative">
+                           {/* Delivery Overlay */}
+                           {deliveryOrderId === order.id && (
+                             <div className="col-span-12 bg-cyber-dark/95 border border-cyber-primary p-4 rounded mb-2 animate-fade-in z-10 shadow-xl">
+                                <h4 className="text-cyber-primary font-bold uppercase mb-3 flex items-center gap-2">
+                                  <CheckCircleIcon className="w-4 h-4" /> {t.adminDeliverTitle}
+                                </h4>
+                                <div className="grid grid-cols-2 gap-4">
+                                  <div>
+                                    <label className="text-[10px] text-gray-500 block mb-1 uppercase">{t.adminImgUrl}</label>
+                                    <input 
+                                      className="w-full bg-black border border-white/20 p-2 text-white text-xs outline-none focus:border-cyber-primary"
+                                      placeholder="https://..."
+                                      value={resultImgUrl}
+                                      onChange={(e) => setResultImgUrl(e.target.value)}
+                                    />
+                                  </div>
+                                  <div>
+                                    <label className="text-[10px] text-gray-500 block mb-1 uppercase">{t.adminDesc}</label>
+                                    <input 
+                                      className="w-full bg-black border border-white/20 p-2 text-white text-xs outline-none focus:border-cyber-primary"
+                                      placeholder="..."
+                                      value={resultDesc}
+                                      onChange={(e) => setResultDesc(e.target.value)}
+                                    />
+                                  </div>
+                                </div>
+                                <div className="flex justify-end gap-2 mt-4">
+                                   <button 
+                                     onClick={() => setDeliveryOrderId(null)}
+                                     className="px-4 py-2 text-[10px] font-bold uppercase text-gray-400 hover:text-white"
+                                   >
+                                     Cancel
+                                   </button>
+                                   <button 
+                                     onClick={handleDeliver}
+                                     disabled={!resultImgUrl}
+                                     className="px-4 py-2 bg-cyber-primary text-black text-[10px] font-bold uppercase hover:bg-white transition-colors"
+                                   >
+                                     {actionLoading === order.id ? 'Sending...' : t.adminDeliverBtn}
+                                   </button>
+                                </div>
+                             </div>
+                           )}
+
                            <div className="col-span-2">
                               <div className="text-white font-mono text-xs">{formatDate(order.createdAt)}</div>
                               <div className="text-gray-500 font-mono text-[10px]">#{order.id.slice(-4)}</div>
@@ -170,20 +239,33 @@ const AdminPanel: React.FC<AdminPanelProps> = ({ language, onBack }) => {
                                   {order.status}
                                </div>
                                <div className="flex gap-1">
-                                  {(['reviewing', 'busy', 'completed'] as Order['status'][]).map(s => (
-                                      <button 
-                                         key={s}
-                                         onClick={() => handleStatusChange(order.id, s)}
-                                         disabled={actionLoading === order.id}
-                                         className={`w-6 h-6 flex items-center justify-center rounded border transition-colors ${
-                                             s === 'reviewing' ? 'border-yellow-400/30 text-yellow-400 hover:bg-yellow-400 hover:text-black' :
-                                             s === 'busy' ? 'border-red-500/30 text-red-500 hover:bg-red-500 hover:text-white' :
-                                             'border-green-500/30 text-green-500 hover:bg-green-500 hover:text-black'
-                                         }`}
-                                      >
-                                          {s === 'reviewing' ? '👁' : s === 'busy' ? '⏳' : '✓'}
-                                      </button>
-                                  ))}
+                                  <button 
+                                     onClick={() => handleStatusChange(order.id, 'reviewing')}
+                                     disabled={actionLoading === order.id}
+                                     className="w-6 h-6 flex items-center justify-center rounded border border-yellow-400/30 text-yellow-400 hover:bg-yellow-400 hover:text-black transition-colors"
+                                     title="Set Reviewing"
+                                  >
+                                      👁
+                                  </button>
+                                  <button 
+                                     onClick={() => handleStatusChange(order.id, 'busy')}
+                                     disabled={actionLoading === order.id}
+                                     className="w-6 h-6 flex items-center justify-center rounded border border-red-500/30 text-red-500 hover:bg-red-500 hover:text-white transition-colors"
+                                     title="Set Busy"
+                                  >
+                                      ⏳
+                                  </button>
+                                  <button 
+                                     onClick={() => {
+                                       setDeliveryOrderId(order.id);
+                                       setResultDesc(`Hi ${order.firstName}, here is your ${order.selectedDesign}!`);
+                                     }}
+                                     disabled={actionLoading === order.id}
+                                     className="w-6 h-6 flex items-center justify-center rounded border border-green-500/30 text-green-500 hover:bg-green-500 hover:text-black transition-colors"
+                                     title="Deliver & Complete"
+                                  >
+                                      ✓
+                                  </button>
                                </div>
                            </div>
                         </div>
@@ -198,8 +280,8 @@ const AdminPanel: React.FC<AdminPanelProps> = ({ language, onBack }) => {
              <div className="overflow-x-auto">
                <div className="min-w-[800px]">
                  <div className="grid grid-cols-12 gap-2 text-[10px] uppercase text-gray-500 font-bold tracking-widest p-4 bg-white/5 border-b border-white/10">
-                     <div className="col-span-4">{t.adminColUser}</div>
-                     <div className="col-span-4">{t.adminColLogin}</div>
+                     <div className="col-span-5">{t.adminColUser}</div>
+                     <div className="col-span-3">{t.adminColLogin}</div>
                      <div className="col-span-4 text-right">{t.adminColAction}</div>
                  </div>
                  {activeUsers.length === 0 ? (
@@ -207,18 +289,24 @@ const AdminPanel: React.FC<AdminPanelProps> = ({ language, onBack }) => {
                  ) : (
                     activeUsers.map(u => (
                        <div key={u.uid} className="grid grid-cols-12 gap-2 items-center p-4 border-b border-white/5 hover:bg-white/[0.02] transition-colors group">
-                           <div className="col-span-4 flex items-center gap-3">
+                           <div className="col-span-5 flex items-center gap-3">
                               {u.profile.photoURL ? (
                                  <img src={u.profile.photoURL} className="w-8 h-8 rounded-full border border-white/20" alt=""/>
                               ) : (
                                  <div className="w-8 h-8 rounded-full bg-cyber-primary flex items-center justify-center text-black font-bold">{u.profile.displayName?.[0]}</div>
                               )}
                               <div>
-                                 <div className="text-sm font-bold text-white">{u.profile.displayName}</div>
+                                 <div className="flex items-center gap-2">
+                                     <div className="text-sm font-bold text-white">{u.profile.displayName}</div>
+                                     <span className={`text-[8px] px-1 rounded border ${u.profile.authMethod === 'telegram' ? 'border-blue-500 text-blue-500' : 'border-gray-500 text-gray-500'}`}>
+                                         {u.profile.authMethod === 'telegram' ? 'TG' : 'GOOGLE'}
+                                     </span>
+                                 </div>
                                  <div className="text-xs text-gray-500">{u.profile.email}</div>
+                                 {u.profile.telegramId && <div className="text-[10px] text-blue-400 font-mono">ID: {u.profile.telegramId}</div>}
                               </div>
                            </div>
-                           <div className="col-span-4 text-xs font-mono text-gray-400">
+                           <div className="col-span-3 text-xs font-mono text-gray-400">
                                {u.profile.lastLogin ? formatDate(u.profile.lastLogin) : 'N/A'}
                            </div>
                            <div className="col-span-4 flex justify-end">

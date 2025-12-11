@@ -23,6 +23,7 @@ export const auth = getAuth(app);
 const db = getDatabase(app);
 const googleProvider = new GoogleAuthProvider();
 
+// --- GOOGLE AUTH ---
 export const loginWithGoogle = async () => {
   try {
     const result = await signInWithPopup(auth, googleProvider);
@@ -36,25 +37,99 @@ export const loginWithGoogle = async () => {
 export const logout = async () => {
   try {
     await signOut(auth);
+    localStorage.removeItem('telegram_user_session'); // Clear Telegram session
   } catch (error) {
     console.error("Logout failed:", error);
   }
 };
 
-// --- USER SYNC ---
-// Call this on every login to ensure user is in DB list
+// --- TELEGRAM AUTH (CUSTOM) ---
+
+export const registerTelegramUser = async (telegramId: string, nickname: string): Promise<User> => {
+  const uid = `tg_${telegramId}`;
+  const user: User = {
+    uid,
+    displayName: nickname,
+    email: null,
+    photoURL: null,
+    telegramId: telegramId,
+    authMethod: 'telegram'
+  };
+
+  try {
+    // Save to DB so Admin can see them
+    const userRef = ref(db, `users/${uid}/profile`);
+    await update(userRef, {
+      displayName: nickname,
+      email: 'Telegram User',
+      photoURL: '',
+      lastLogin: Date.now(),
+      telegramId: telegramId,
+      authMethod: 'telegram'
+    });
+    
+    // Save session locally
+    localStorage.setItem('telegram_user_session', JSON.stringify(user));
+    return user;
+  } catch (e) {
+    console.error("Failed to register Telegram user", e);
+    throw e;
+  }
+};
+
+export const getTelegramSession = (): User | null => {
+  const session = localStorage.getItem('telegram_user_session');
+  if (session) {
+    return JSON.parse(session);
+  }
+  return null;
+};
+
+// --- USER SYNC & PROFILE ---
+
 export const syncUserProfile = async (user: User) => {
   if (!user.uid) return;
   try {
     const userRef = ref(db, `users/${user.uid}/profile`);
+    // Only update basic fields
+    const snapshot = await get(userRef);
+    const existingData = snapshot.val() || {};
+
     await update(userRef, {
       displayName: user.displayName || 'Unknown',
-      email: user.email || 'No Email',
+      email: user.email || (user.authMethod === 'telegram' ? 'Telegram User' : 'No Email'),
       photoURL: user.photoURL || '',
-      lastLogin: Date.now()
+      lastLogin: Date.now(),
+      telegramId: existingData.telegramId || user.telegramId || null,
+      authMethod: user.authMethod
     });
   } catch (e) {
     console.error("Failed to sync user profile", e);
+  }
+};
+
+export const getUserProfile = async (userId: string): Promise<{ telegramId?: string }> => {
+  try {
+    const userRef = ref(db, `users/${userId}/profile`);
+    const snapshot = await get(userRef);
+    if (snapshot.exists()) {
+      return snapshot.val();
+    }
+    return {};
+  } catch (error) {
+    console.error("Error fetching user profile:", error);
+    return {};
+  }
+};
+
+export const updateUserTelegramId = async (userId: string, telegramId: string) => {
+  try {
+    const userRef = ref(db, `users/${userId}/profile`);
+    await update(userRef, { telegramId });
+    return true;
+  } catch (error) {
+    console.error("Error updating telegram ID:", error);
+    return false;
   }
 };
 
@@ -73,18 +148,32 @@ export const getUserBanStatus = async (userId: string): Promise<BanStatus> => {
   }
 };
 
-export const incrementBanStrikes = async (userId: string) => {
+export const incrementBanStrikes = async (userId: string): Promise<boolean> => {
   try {
-    const attemptsRef = ref(db, `users/${userId}/security/attempts`);
-    await set(attemptsRef, increment(1));
+    const securityRef = ref(db, `users/${userId}/security`);
+    const snapshot = await get(securityRef);
+    let attempts = 0;
     
-    // Check if limit reached
-    const status = await getUserBanStatus(userId);
-    if (status.attempts >= 3) {
-      await banUser(userId, "Fake Location Data");
-      return true; // Banned
+    if (snapshot.exists()) {
+      attempts = snapshot.val().attempts || 0;
     }
-    return false; // Not banned yet
+
+    attempts += 1;
+
+    // Ban if 3 strikes
+    if (attempts >= 3) {
+      await update(securityRef, {
+        attempts,
+        isBanned: true,
+        reason: "Location Verification Failed 3 times (System Auto-Ban)",
+        bannedAt: Date.now()
+      });
+      console.log(`🚫 BANNED USER (AUTO): ${userId}`);
+      return true; // Is Banned
+    } else {
+      await update(securityRef, { attempts });
+      return false; // Not Banned yet
+    }
   } catch (error) {
     console.error("Error incrementing strikes:", error);
     return false;
@@ -181,6 +270,23 @@ export const updateOrderStatus = async (orderId: string, newStatus: Order['statu
     return true;
   } catch (error) {
     console.error("❌ Error updating order:", error);
+    return false;
+  }
+};
+
+// NEW: Deliver finished work
+export const deliverOrderResult = async (orderId: string, imageUrl: string, description: string) => {
+  try {
+    const orderRef = ref(db, `orders/${orderId}`);
+    await update(orderRef, { 
+      status: 'completed',
+      resultImage: imageUrl,
+      resultDescription: description
+    });
+    console.log("✅ Order delivered successfully");
+    return true;
+  } catch (error) {
+    console.error("❌ Error delivering order:", error);
     return false;
   }
 };

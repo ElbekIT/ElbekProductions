@@ -2,17 +2,26 @@
 export type DesignType = 'preview' | 'banner' | 'avatar' | 'logo';
 export type GameType = 'pubg' | 'minecraft' | 'csgo' | 'vlog' | 'gta' | 'valorant' | 'freefire' | 'roblox' | 'fifa' | 'cod' | 'dota' | 'standoff' | 'other';
 
-// Top 30 languages covering most of the world + Central Asia
+// Massive list of world languages covering 99% of internet users
 export type Language = 
-  | 'uz' | 'ru' | 'en' | 'tr' | 'ar' | 'es' | 'fr' | 'de' | 'hi' | 'zh' 
-  | 'ja' | 'ko' | 'it' | 'pt' | 'id' | 'vi' | 'th' | 'nl' | 'pl' | 'fa'
-  | 'uk' | 'kk' | 'ky' | 'tg' | 'az';
+  | 'uz' | 'ru' | 'en' // Core
+  | 'tr' | 'ar' | 'es' | 'fr' | 'de' | 'hi' | 'zh' | 'ja' | 'ko' // Major Global
+  | 'it' | 'pt' | 'id' | 'vi' | 'th' | 'nl' | 'pl' | 'fa' // Secondary Global
+  | 'uk' | 'kk' | 'ky' | 'tg' | 'az' // CIS / Central Asia
+  | 'af' | 'sq' | 'am' | 'hy' | 'bn' | 'bs' | 'bg' | 'ca' // A-C
+  | 'hr' | 'cs' | 'da' | 'et' | 'fi' | 'ka' | 'el' | 'gu' // D-G
+  | 'he' | 'hu' | 'is' | 'ga' | 'kn' | 'km' | 'lo' | 'lv' // H-L
+  | 'lt' | 'mk' | 'ms' | 'ml' | 'mr' | 'mn' | 'ne' | 'no' // L-N
+  | 'ps' | 'pa' | 'ro' | 'sr' | 'si' | 'sk' | 'sl' | 'so' // P-S
+  | 'sw' | 'sv' | 'ta' | 'te' | 'ur' | 'cy' | 'zu';       // S-Z
 
 export interface User {
   uid: string;
   displayName: string | null;
-  email: string | null;
+  email: string | null; // Can be null for Telegram users
   photoURL: string | null;
+  telegramId?: string;
+  authMethod: 'google' | 'telegram'; // NEW: Track login method
 }
 
 export interface OrderFormState {
@@ -50,6 +59,8 @@ export interface FullUserData {
     email: string;
     photoURL: string;
     lastLogin: number;
+    telegramId?: string;
+    authMethod?: 'google' | 'telegram'; // NEW
   };
   security?: BanStatus;
 }
@@ -59,6 +70,9 @@ export interface Order extends OrderFormState {
   userId: string;
   createdAt: number;
   status: 'sent' | 'processing' | 'completed' | 'busy' | 'reviewing';
+  // New fields for delivery
+  resultImage?: string;
+  resultDescription?: string;
 }
 
 export interface ValidationErrors {

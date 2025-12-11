@@ -5,16 +5,16 @@ import ShopSelection from './components/ShopSelection';
 import OrderForm from './components/OrderForm';
 import MyOrders from './components/MyOrders';
 import AdminPanel from './components/AdminPanel';
-import LocationVerifier from './components/LocationVerifier';
+import TelegramVerifier from './components/TelegramVerifier';
 import IntroLoader from './components/IntroLoader';
 import { DesignType, GameType, Language, User, VerifiedLocation } from './types';
 import { CheckCircleIcon, LoaderIcon, AlertCircleIcon } from './components/Icons';
 import { translations } from './utils/translations';
-import { auth, loginWithGoogle, logout, getUserBanStatus, syncUserProfile } from './services/firebase';
+import { auth, loginWithGoogle, logout, getUserBanStatus, syncUserProfile, getUserProfile, getTelegramSession } from './services/firebase';
 import { onAuthStateChanged } from 'firebase/auth';
 
 // View states
-type View = 'hero' | 'location-verify' | 'shop' | 'form' | 'success' | 'my-orders' | 'admin' | 'banned';
+type View = 'hero' | 'telegram-verify' | 'shop' | 'form' | 'success' | 'my-orders' | 'admin' | 'banned';
 
 const App = () => {
   const [showIntro, setShowIntro] = useState(true);
@@ -23,74 +23,151 @@ const App = () => {
   const [language, setLanguage] = useState<Language>('uz');
   const [user, setUser] = useState<User | null>(null);
   const [authLoading, setAuthLoading] = useState(true);
-  const [verifiedLocation, setVerifiedLocation] = useState<VerifiedLocation | null>(null);
 
   const t = translations[language];
 
+  // --- SECURITY PROTOCOLS ---
   useEffect(() => {
+    // 1. Disable Right Click
+    const handleContextMenu = (e: MouseEvent) => {
+      e.preventDefault();
+      return false;
+    };
+
+    // 2. Disable Keyboard Shortcuts (Ctrl+U, F12, Ctrl+Shift+I, etc.)
+    const handleKeyDown = (e: KeyboardEvent) => {
+      // F12
+      if (e.key === 'F12' || e.keyCode === 123) {
+        e.preventDefault();
+        return false;
+      }
+
+      // Ctrl + Shift + I/J/C (DevTools)
+      if (e.ctrlKey && e.shiftKey && (['I', 'J', 'C', 'i', 'j', 'c'].includes(e.key))) {
+        e.preventDefault();
+        return false;
+      }
+
+      // Ctrl + U (View Source)
+      if (e.ctrlKey && (e.key === 'u' || e.key === 'U')) {
+        e.preventDefault();
+        return false;
+      }
+
+      // Ctrl + S (Save Page)
+      if (e.ctrlKey && (e.key === 's' || e.key === 'S')) {
+        e.preventDefault();
+        return false;
+      }
+    };
+
+    document.addEventListener('contextmenu', handleContextMenu);
+    document.addEventListener('keydown', handleKeyDown);
+
+    // 3. Clear Console Warning
+    console.clear();
+    console.log('%cSTOP!', 'color: red; font-size: 50px; font-weight: bold; text-shadow: 2px 2px black;');
+    console.log('%cThis is a secure browser feature.', 'font-size: 20px;');
+
+    return () => {
+      document.removeEventListener('contextmenu', handleContextMenu);
+      document.removeEventListener('keydown', handleKeyDown);
+    };
+  }, []);
+
+  // --- AUTH CHECKER ---
+  useEffect(() => {
+    // 1. Check Google Auth
     const unsubscribe = onAuthStateChanged(auth, async (currentUser) => {
       if (currentUser) {
-        // Sync basic profile to DB for Admin
-        await syncUserProfile({
-           uid: currentUser.uid,
-           displayName: currentUser.displayName,
-           email: currentUser.email,
-           photoURL: currentUser.photoURL
-        });
-
-        // Check for ban immediately
-        const banStatus = await getUserBanStatus(currentUser.uid);
-        if (banStatus.isBanned) {
-          setUser({
+        await handleUserLogin({
             uid: currentUser.uid,
             displayName: currentUser.displayName,
             email: currentUser.email,
-            photoURL: currentUser.photoURL
-          });
-          setCurrentView('banned');
-          await logout(); // Ensure they are logged out of session even if banned
-          setAuthLoading(false);
-          return;
-        }
-
-        setUser({
-          uid: currentUser.uid,
-          displayName: currentUser.displayName,
-          email: currentUser.email,
-          photoURL: currentUser.photoURL
+            photoURL: currentUser.photoURL,
+            authMethod: 'google'
         });
       } else {
-        setUser(null);
+        // 2. Check Local Telegram Session
+        const tgSession = getTelegramSession();
+        if (tgSession) {
+             await handleUserLogin(tgSession);
+        } else {
+             setUser(null);
+             setAuthLoading(false);
+        }
       }
-      setAuthLoading(false);
     });
 
     return () => unsubscribe();
   }, []);
 
-  const handleStart = async () => {
-    if (!user) {
-      try {
-        await loginWithGoogle();
-        // Ban check handles redirection in useEffect
-      } catch (error) {
-        // Error handling if needed
+  const handleUserLogin = async (userData: User) => {
+      // Check Ban
+      const banStatus = await getUserBanStatus(userData.uid);
+      if (banStatus.isBanned) {
+          setUser(userData);
+          setCurrentView('banned');
+          setAuthLoading(false);
+          return;
       }
-    } else {
-      if (currentView !== 'banned') {
-         // FLOW: Hero -> Location Verify -> Shop
-         setCurrentView('location-verify');
+
+      // Sync Profile to DB
+      await syncUserProfile(userData);
+      
+      // If Google User, check stored Telegram ID
+      if (userData.authMethod === 'google') {
+          const profile = await getUserProfile(userData.uid);
+          setUser({
+              ...userData,
+              telegramId: profile.telegramId
+          });
+      } else {
+          // Telegram user already has ID in object
+          setUser(userData);
       }
-    }
+      setAuthLoading(false);
   };
 
-  const handleLocationVerified = (loc: VerifiedLocation) => {
-    setVerifiedLocation(loc);
-    setCurrentView('shop');
+  const handleStart = async (method: 'google' | 'telegram') => {
+    if (user) {
+         // Already Logged In
+         if (user.authMethod === 'google' && !user.telegramId) {
+             setCurrentView('telegram-verify'); // Add ID to Google account
+         } else {
+             setCurrentView('shop');
+         }
+         return;
+    }
+
+    if (method === 'google') {
+        try {
+            await loginWithGoogle();
+        } catch (error) {
+            // Error handling
+        }
+    } else {
+        // Telegram Login Flow
+        setCurrentView('telegram-verify');
+    }
+  };
+  
+  // Callback when Telegram Verifier finishes
+  const handleTelegramVerified = (telegramId: string, newUser?: User) => {
+    if (newUser) {
+        // This was a registration/login of a Telegram User
+        setUser(newUser);
+        setCurrentView('shop');
+    } else if (user) {
+        // This was adding ID to existing Google user
+        setUser({ ...user, telegramId });
+        setCurrentView('shop');
+    }
   };
 
   const handleLogout = async () => {
     await logout();
+    setUser(null);
     setCurrentView('hero');
   };
 
@@ -103,10 +180,6 @@ const App = () => {
     setCurrentView('shop');
   };
   
-  const handleBackToVerify = () => {
-    setCurrentView('location-verify');
-  };
-
   const handleBackToHero = () => {
     setCurrentView('hero');
   };
@@ -122,10 +195,6 @@ const App = () => {
   const handleAdminPanel = () => {
     if(currentView !== 'banned') setCurrentView('admin');
   }
-  
-  const handleBan = () => {
-    setCurrentView('banned');
-  }
 
   const resetApp = () => {
     setOrderConfig(null);
@@ -137,7 +206,7 @@ const App = () => {
     return <IntroLoader onFinish={() => setShowIntro(false)} />;
   }
 
-  // 2. Then show Auth Loader if firebase is still thinking (usually instant after intro)
+  // 2. Then show Auth Loader
   if (authLoading) {
     return (
       <div className="min-h-screen bg-[#020205] flex flex-col items-center justify-center relative overflow-hidden z-[100]">
@@ -181,20 +250,19 @@ const App = () => {
         />
       )}
       
-      {currentView === 'location-verify' && user && (
-        <LocationVerifier
+      {currentView === 'telegram-verify' && (
+        <TelegramVerifier
           user={user}
           language={language}
-          onVerified={handleLocationVerified}
+          onVerified={handleTelegramVerified}
           onBack={handleBackToHero}
-          onBan={handleBan}
         />
       )}
       
       {currentView === 'shop' && (
         <ShopSelection 
           onNext={handleShopSelection} 
-          onBack={handleBackToVerify}
+          onBack={handleBackToHero}
           language={language}
         />
       )}
